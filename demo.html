@@ -222,7 +222,15 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:8000';
+        // Auto-detect API URL based on environment
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:8000' 
+            : 'https://your-api-name.onrender.com'; // Replace with your actual Render URL
+        
+        // You can also set this manually for GitHub Pages:
+        // const API_BASE_URL = 'https://your-api-name.onrender.com';
+        
+        console.log('Using API URL:', API_BASE_URL);
         
         async function generateApiKey() {
             const keyName = document.getElementById('keyName').value;

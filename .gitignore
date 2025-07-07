@@ -118,6 +118,10 @@ temp/
 # VS Code
 .vscode/
 
+# Deployment backups
+*.bak
+demo.html.bak
+
 # macOS
 .DS_Store
 .DS_Store?

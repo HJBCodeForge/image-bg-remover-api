@@ -158,16 +158,33 @@ API_PORT=8000
 python3 main.py
 ```
 
-### 2. Docker
+### 2. Deploy to Render + GitHub Pages
+```bash
+# Run the configuration script
+./configure_deployment.sh
+
+# Follow the deployment guide
+# See DEPLOYMENT_GUIDE.md for detailed instructions
+```
+
+### 3. Docker
 ```bash
 docker build -t bg-remover-api .
 docker run -p 8000:8000 bg-remover-api
 ```
 
-### 3. Docker Compose
+### 4. Docker Compose
 ```bash
 docker-compose up -d
 ```
+
+## 🌐 Live Deployment
+
+Your API can be deployed to:
+- **Backend**: Render, Heroku, DigitalOcean, AWS, etc.
+- **Frontend**: GitHub Pages, Netlify, Vercel, etc.
+
+See `DEPLOYMENT_GUIDE.md` for step-by-step instructions.
 
 ## 📊 Features
 

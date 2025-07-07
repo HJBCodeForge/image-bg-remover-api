@@ -21,7 +21,16 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure this properly for production
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8080", 
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+        "https://*.github.io",
+        "https://*.githubpages.com",
+        "https://*.onrender.com",
+        "*"  # Remove this in production and specify exact domains
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
