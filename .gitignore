@@ -81,6 +81,7 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.production
 .venv
 env/
 venv/
@@ -121,6 +122,11 @@ temp/
 # Deployment backups
 *.bak
 demo.html.bak
+
+# GitHub Pages build artifacts
+_site/
+.jekyll-cache/
+.jekyll-metadata
 
 # macOS
 .DS_Store

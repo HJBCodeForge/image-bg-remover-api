@@ -5,6 +5,19 @@ Your GitHub Pages site is live, but the demo shows "Failed to fetch" because:
 1. The API backend isn't deployed yet
 2. The demo is trying to connect to a placeholder URL
 
+## 🔧 **GitHub Pages Build Failing?**
+
+If you're seeing build failures, it's because GitHub Pages is trying to process Python files. Here's the fix:
+
+### **Repository Settings Fix:**
+1. Go to your GitHub repository
+2. Click "Settings" → "Pages" 
+3. Under "Source", select "Deploy from a branch"
+4. Choose "main" branch and "/ (root)" folder
+5. Save and wait for deployment
+
+The `.nojekyll` file and `_config.yml` will tell GitHub Pages to ignore Python files.
+
 ## ✅ **Quick Solutions**
 
 ### **Option 1: Deploy API to Render (Recommended)**
@@ -24,7 +37,7 @@ Your GitHub Pages site is live, but the demo shows "Failed to fetch" because:
    https://your-app-name.onrender.com
    ```
 
-4. **Update demo.html**: Change line ~200:
+4. **Update demo.html**: Change line ~225:
    ```javascript
    const API_BASE_URL = 'https://your-actual-render-url.onrender.com';
    ```
@@ -53,7 +66,7 @@ Your GitHub Pages site is live, but the demo shows "Failed to fetch" because:
 
 Edit these files with your actual API URL:
 
-### **demo.html** (line ~200):
+### **demo.html** (line ~225):
 ```javascript
 const API_BASE_URL = 'https://your-app-name.onrender.com';
 ```
@@ -65,6 +78,7 @@ const API_BASE_URL = 'https://your-app-name.onrender.com';
 
 ## 📋 **Deployment Checklist**
 
+- [ ] GitHub Pages configured (Settings > Pages > Deploy from branch)
 - [ ] API deployed to Render/Heroku/etc.
 - [ ] API URL updated in demo.html
 - [ ] API URL updated in index.html  
@@ -82,6 +96,12 @@ After deployment:
 
 ## 🆘 **Still Having Issues?**
 
+### **GitHub Pages Build Failures:**
+- Make sure you have `.nojekyll` file in root
+- Check `_config.yml` excludes Python files
+- Use "Deploy from branch" not "GitHub Actions"
+
+### **API Connection Issues:**
 1. **Check API Status**: Use `api-status.html`
 2. **Check Browser Console**: Look for CORS or network errors
 3. **Test API Directly**: `curl https://your-api-url/health`
