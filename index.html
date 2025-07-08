@@ -97,13 +97,25 @@
         document.getElementById('apiUrl').textContent = apiUrl;
         document.getElementById('docsLink').href = apiUrl + '/docs';
         
-        // Update the link if it's a placeholder
-        if (apiUrl.includes('your-api-name')) {
+        // Check if API is not configured or not available
+        const needsConfiguration = apiUrl.includes('your-api-name') || !isLocal;
+        
+        if (needsConfiguration && apiUrl.includes('your-api-name')) {
             document.getElementById('docsLink').style.opacity = '0.5';
             document.getElementById('docsLink').onclick = function(e) {
                 e.preventDefault();
-                alert('Please update the API URL in index.html after deploying to Render');
+                alert('⚠️ API not configured yet!\n\nTo use this demo:\n1. Deploy the API to Render\n2. Update the API URL in demo.html\n3. See DEPLOYMENT_GUIDE.md for instructions');
             };
+            
+            // Add warning message
+            const warningDiv = document.createElement('div');
+            warningDiv.innerHTML = `
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px 0; color: #856404;">
+                    <strong>⚠️ API Not Deployed Yet</strong><br>
+                    The demo requires the API to be deployed first. See <strong>DEPLOYMENT_GUIDE.md</strong> for instructions.
+                </div>
+            `;
+            document.querySelector('.content').appendChild(warningDiv);
         }
     </script>
 </body>

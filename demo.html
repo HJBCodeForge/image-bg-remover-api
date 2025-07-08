@@ -232,12 +232,50 @@
         
         console.log('Using API URL:', API_BASE_URL);
         
+        // Check if API is properly configured
+        function checkApiConfiguration() {
+            if (API_BASE_URL.includes('your-api-name')) {
+                const warningDiv = document.createElement('div');
+                warningDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>⚠️ API Configuration Required</strong><br>
+                        The API URL needs to be configured. Please:<br>
+                        1. Deploy the API to Render (see DEPLOYMENT_GUIDE.md)<br>
+                        2. Update the API_BASE_URL in this file<br>
+                        3. Or run locally with: <code>python3 main.py</code>
+                    </div>
+                `;
+                document.querySelector('.content').insertBefore(warningDiv, document.querySelector('.section'));
+                
+                // Disable buttons
+                document.querySelectorAll('.btn').forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+            }
+        }
+        
+        // Check configuration on page load
+        document.addEventListener('DOMContentLoaded', checkApiConfiguration);
+        
         async function generateApiKey() {
             const keyName = document.getElementById('keyName').value;
             const resultDiv = document.getElementById('apiKeyResult');
             
             if (!keyName.trim()) {
                 resultDiv.innerHTML = '<div class="result error">Please enter a name for your API key</div>';
+                return;
+            }
+            
+            // Check if API is configured
+            if (API_BASE_URL.includes('your-api-name')) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>⚠️ API Not Configured</strong><br>
+                        Please deploy the API first or run it locally.<br>
+                        See <strong>DEPLOYMENT_GUIDE.md</strong> for instructions.
+                    </div>
+                `;
                 return;
             }
             
@@ -272,7 +310,22 @@
                 `;
                 
             } catch (error) {
-                resultDiv.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+                let errorMessage = error.message;
+                
+                // Provide more specific error messages
+                if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                    errorMessage = `
+                        <strong>Connection Failed</strong><br>
+                        Cannot connect to the API server at:<br>
+                        <code>${API_BASE_URL}</code><br><br>
+                        <strong>Possible solutions:</strong><br>
+                        • Make sure the API is running locally: <code>python3 main.py</code><br>
+                        • Deploy the API to Render (see DEPLOYMENT_GUIDE.md)<br>
+                        • Check if the API URL is correct
+                    `;
+                }
+                
+                resultDiv.innerHTML = `<div class="result error">❌ ${errorMessage}</div>`;
             }
         }
         
