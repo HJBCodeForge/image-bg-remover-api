@@ -29,7 +29,9 @@ app.add_middleware(
         "https://*.github.io",
         "https://*.githubpages.com",
         "https://*.onrender.com",
-        "*"  # Remove this in production and specify exact domains
+        "https://*.render.com",
+        # Add your specific Render URLs here after deployment
+        # "https://your-frontend-name.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -231,7 +233,9 @@ if __name__ == "__main__":
     
     load_dotenv()
     
-    host = os.getenv("API_HOST", "0.0.0.0")
-    port = int(os.getenv("API_PORT", 8000))
+    # Use Render's PORT environment variable or default to 8000
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", os.getenv("API_PORT", 8000)))
     
+    print(f"Starting server on {host}:{port}")
     uvicorn.run(app, host=host, port=port)
