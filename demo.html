@@ -224,11 +224,8 @@
     <script>
         // Auto-detect API URL based on environment
         const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? 'https://bg-remover-api-052i.onrender.com' 
-            : 'https://your-api-name.onrender.com'; // Replace with your actual Render URL
-        
-        // You can also set this manually for GitHub Pages:
-        // const API_BASE_URL = 'https://your-api-name.onrender.com';
+            ? 'http://localhost:8000' 
+            : 'https://bg-remover-api-052i.onrender.com'; // Your actual deployed API URL
         
         console.log('Using API URL:', API_BASE_URL);
         

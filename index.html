@@ -91,16 +91,16 @@
         // Auto-detect or set API URL
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         const apiUrl = isLocal 
-            ? 'https://bg-remover-api-052i.onrender.com' 
-            : 'https://your-api-name.onrender.com'; // Update this with your actual API URL
+            ? 'http://localhost:8000' 
+            : 'https://bg-remover-api-052i.onrender.com'; // Your actual deployed API URL
         
         document.getElementById('apiUrl').textContent = apiUrl;
         document.getElementById('docsLink').href = apiUrl + '/docs';
         
         // Check if API is not configured or not available
-        const needsConfiguration = apiUrl.includes('your-api-name') || !isLocal;
+        const needsConfiguration = apiUrl.includes('your-api-name');
         
-        if (needsConfiguration && apiUrl.includes('your-api-name')) {
+        if (needsConfiguration) {
             document.getElementById('docsLink').style.opacity = '0.5';
             document.getElementById('docsLink').onclick = function(e) {
                 e.preventDefault();
