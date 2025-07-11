@@ -14,6 +14,7 @@ class BackgroundRemover:
         # Import rembg here to handle different versions
         self.remove_func = None
         self.session = None
+        self._session_initialized = False
         
         try:
             logger.info("Attempting to import rembg...")
@@ -21,36 +22,54 @@ class BackgroundRemover:
             self.remove_func = remove
             logger.info("Successfully imported rembg.remove")
             
-            # Try to import new_session for newer versions
+            # Import new_session but don't create session until needed (lazy loading)
             try:
                 from rembg import new_session
-                logger.info("Attempting to create rembg session...")
-                # Try to create a session with u2net model (more memory efficient)
-                try:
-                    self.session = new_session('u2net')
-                    logger.info("Successfully created u2net session")
-                except Exception as e:
-                    logger.warning(f"Failed to create u2net session: {e}")
-                    # If u2net fails, use default
-                    try:
-                        self.session = new_session()
-                        logger.info("Successfully created default session")
-                    except Exception as e2:
-                        logger.warning(f"Failed to create default session: {e2}")
-                        self.session = None
+                self.new_session = new_session
+                logger.info("Successfully imported new_session - will create session on first use")
             except ImportError as e:
                 logger.warning(f"new_session not available: {e}")
-                self.session = None
+                self.new_session = None
                 
         except ImportError as e:
             logger.error(f"Failed to import rembg: {e}")
             # Fallback if rembg import fails
             self.remove_func = None
-            self.session = None
+            self.new_session = None
         except Exception as e:
             logger.error(f"Unexpected error initializing rembg: {e}")
             self.remove_func = None
-            self.session = None
+            self.new_session = None
+    
+    def _ensure_session(self):
+        """Lazy initialization of rembg session to save memory on startup"""
+        if not self._session_initialized and self.new_session:
+            try:
+                logger.info("Creating rembg session on first use...")
+                # Try u2net_lite first (most memory efficient)
+                try:
+                    self.session = self.new_session('u2net_lite')
+                    logger.info("Successfully created u2net_lite session")
+                except Exception as e:
+                    logger.warning(f"Failed to create u2net_lite session: {e}")
+                    # Try silueta (also memory efficient)
+                    try:
+                        self.session = self.new_session('silueta')
+                        logger.info("Successfully created silueta session")
+                    except Exception as e2:
+                        logger.warning(f"Failed to create silueta session: {e2}")
+                        # Fall back to default u2net
+                        try:
+                            self.session = self.new_session('u2net')
+                            logger.info("Successfully created u2net session")
+                        except Exception as e3:
+                            logger.warning(f"Failed to create u2net session: {e3}")
+                            self.session = None
+            except Exception as e:
+                logger.error(f"Failed to create any session: {e}")
+                self.session = None
+            finally:
+                self._session_initialized = True
     
     def remove_background(self, image_bytes: bytes) -> Tuple[bytes, float]:
         """
@@ -62,13 +81,20 @@ class BackgroundRemover:
         start_time = time.time()
         
         try:
+            # Ensure session is created (lazy loading)
+            self._ensure_session()
+            
             # Open the image
             input_image = Image.open(io.BytesIO(image_bytes))
             
-            # Resize large images to reduce memory usage
-            max_size = 1024  # Max dimension in pixels
+            # More aggressive resizing to save memory
+            max_size = 800  # Reduced from 1024 to save memory
             if max(input_image.size) > max_size:
                 input_image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+            
+            # Convert to RGB if needed (some formats cause issues)
+            if input_image.mode != 'RGB':
+                input_image = input_image.convert('RGB')
             
             # Remove background using rembg with session if available
             if self.session:

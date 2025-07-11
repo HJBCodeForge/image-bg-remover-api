@@ -43,10 +43,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize background remover
-logger.info("Initializing background remover...")
-bg_remover = BackgroundRemover()
-logger.info("Background remover initialized successfully")
+# Initialize background remover lazily
+logger.info("Setting up background remover (lazy initialization)...")
+bg_remover = None
+
+def get_background_remover():
+    """Get background remover instance with lazy initialization"""
+    global bg_remover
+    if bg_remover is None:
+        logger.info("Initializing background remover on first use...")
+        bg_remover = BackgroundRemover()
+        logger.info("Background remover initialized successfully")
+    return bg_remover
 
 # Create database tables on startup
 @app.on_event("startup")
@@ -54,6 +62,7 @@ async def startup_event():
     logger.info("Creating database tables...")
     create_tables()
     logger.info("Database tables created successfully")
+    # Don't initialize background remover here - wait until first use
 
 @app.get("/")
 async def root():
@@ -187,7 +196,7 @@ async def remove_background(
             )
         
         # Validate image
-        if not bg_remover.validate_image(image_bytes):
+        if not get_background_remover().validate_image(image_bytes):
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 content=ErrorResponse(
@@ -198,7 +207,8 @@ async def remove_background(
             )
         
         # Remove background
-        processed_image_bytes, processing_time = bg_remover.remove_background(image_bytes)
+        remover = get_background_remover()
+        processed_image_bytes, processing_time = remover.remove_background(image_bytes)
         
         if return_json:
             # Return JSON response with processing info
