@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import io
 import os
+import logging
 from typing import List
 
 from database import get_db, APIKey, generate_api_key, create_tables
@@ -11,12 +12,18 @@ from models import APIKeyCreate, APIKeyResponse, BackgroundRemovalResponse, Erro
 from background_remover import BackgroundRemover
 from auth import validate_api_key
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Background Remover API",
     description="API for removing backgrounds from images with API key authentication",
     version="1.0.0"
 )
+
+logger.info("Starting Background Remover API...")
 
 # Add CORS middleware
 app.add_middleware(
@@ -37,12 +44,16 @@ app.add_middleware(
 )
 
 # Initialize background remover
+logger.info("Initializing background remover...")
 bg_remover = BackgroundRemover()
+logger.info("Background remover initialized successfully")
 
 # Create database tables on startup
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Creating database tables...")
     create_tables()
+    logger.info("Database tables created successfully")
 
 @app.get("/")
 async def root():

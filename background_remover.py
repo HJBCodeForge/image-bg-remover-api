@@ -3,24 +3,52 @@ import time
 from PIL import Image
 from typing import Tuple
 import gc
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class BackgroundRemover:
     def __init__(self):
         # Import rembg here to handle different versions
+        self.remove_func = None
+        self.session = None
+        
         try:
-            from rembg import remove, new_session
+            logger.info("Attempting to import rembg...")
+            from rembg import remove
             self.remove_func = remove
+            logger.info("Successfully imported rembg.remove")
+            
+            # Try to import new_session for newer versions
             try:
+                from rembg import new_session
+                logger.info("Attempting to create rembg session...")
                 # Try to create a session with u2net model (more memory efficient)
-                self.session = new_session('u2net')
-            except Exception:
-                # If u2net fails, use default
                 try:
-                    self.session = new_session()
-                except Exception:
-                    self.session = None
-        except ImportError:
+                    self.session = new_session('u2net')
+                    logger.info("Successfully created u2net session")
+                except Exception as e:
+                    logger.warning(f"Failed to create u2net session: {e}")
+                    # If u2net fails, use default
+                    try:
+                        self.session = new_session()
+                        logger.info("Successfully created default session")
+                    except Exception as e2:
+                        logger.warning(f"Failed to create default session: {e2}")
+                        self.session = None
+            except ImportError as e:
+                logger.warning(f"new_session not available: {e}")
+                self.session = None
+                
+        except ImportError as e:
+            logger.error(f"Failed to import rembg: {e}")
             # Fallback if rembg import fails
+            self.remove_func = None
+            self.session = None
+        except Exception as e:
+            logger.error(f"Unexpected error initializing rembg: {e}")
             self.remove_func = None
             self.session = None
     
