@@ -219,6 +219,12 @@
                     </small>
                 </div>
                 <button class="btn" onclick="removeBackground()">Remove Background</button>
+                <div style="margin-top: 10px;">
+                    <small style="color: #666;">
+                        🔧 <a href="https://bg-remover-api-052i.onrender.com/health" target="_blank">Check API Status</a> | 
+                        <a href="/api-status.html" target="_blank">API Status Tool</a>
+                    </small>
+                </div>
                 <div id="imageResult"></div>
             </div>
         </div>
@@ -369,8 +375,40 @@
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Processing your image... This may take a few seconds</p>
+                    <p style="font-size: 0.9em; color: #666;">First request may take longer as the API starts up</p>
                 </div>
             `;
+            
+            // First, check if API is responding
+            try {
+                const healthController = new AbortController();
+                const healthTimeout = setTimeout(() => healthController.abort(), 10000); // 10 seconds for health check
+                
+                const healthResponse = await fetch(`${API_BASE_URL}/health`, {
+                    signal: healthController.signal
+                });
+                
+                clearTimeout(healthTimeout);
+                
+                if (!healthResponse.ok) {
+                    throw new Error('API health check failed');
+                }
+            } catch (healthError) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ API Connection Error</strong><br>
+                        The API server is not responding. This could mean:
+                        <ul style="text-align: left; margin-top: 10px;">
+                            <li>The API is starting up (this can take 1-2 minutes)</li>
+                            <li>The API is temporarily unavailable</li>
+                            <li>Network connectivity issues</li>
+                        </ul>
+                        <br>
+                        <strong>Please wait a few minutes and try again.</strong>
+                    </div>
+                `;
+                return;
+            }
             
             try {
                 const formData = new FormData();
@@ -379,13 +417,20 @@
                 // Add return_json as a query parameter
                 const url = `${API_BASE_URL}/remove-background?return_json=true`;
                 
+                // Create AbortController for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
+                
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${apiKey}`
                     },
-                    body: formData
+                    body: formData,
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 if (!response.ok) {
                     let errorMessage = `HTTP error! status: ${response.status}`;
@@ -431,7 +476,30 @@
                 }
                 
             } catch (error) {
-                resultDiv.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+                let errorMessage = error.message;
+                
+                // Handle specific error types
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Request timed out. The API may be starting up or experiencing issues. Please try again in a few minutes.';
+                } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Network error: Unable to connect to the API. Please check your internet connection and try again.';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage = 'CORS error: Please make sure the API is properly configured.';
+                }
+                
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Error:</strong> ${errorMessage}
+                        <br><br>
+                        <strong>Troubleshooting:</strong>
+                        <ul style="text-align: left; margin-top: 10px;">
+                            <li>Make sure you have a valid API key</li>
+                            <li>Check if the API is running: <a href="${API_BASE_URL}/health" target="_blank">${API_BASE_URL}/health</a></li>
+                            <li>Try uploading a smaller image (under 1MB)</li>
+                            <li>Wait a few minutes and try again (API might be starting up)</li>
+                        </ul>
+                    </div>
+                `;
             }
         }
         
