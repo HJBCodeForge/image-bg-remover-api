@@ -1,77 +1,186 @@
 # Background Remover API
 
-A powerful REST API for removing backgrounds from images with API key authentication.
+🎨 A powerful REST API for removing backgrounds from images with AI-powered precision.
 
-## Features
+## 🌐 Live Demo
+
+- **Frontend:** https://bg-remover-frontend-vfhc.onrender.com
+- **Backend API:** https://bg-remover-api-052i.onrender.com
+- **API Documentation:** https://bg-remover-api-052i.onrender.com/docs
+
+## ✨ Features
 
 - 🔑 **API Key Management**: Generate and manage API keys for secure access
-- 🖼️ **Background Removal**: Advanced AI-powered background removal using the rembg library
+- 🖼️ **AI Background Removal**: Advanced background removal using rembg + ONNX
 - 📊 **Usage Tracking**: Monitor API key usage and statistics
-- 🚀 **Fast Processing**: Efficient image processing with PIL and rembg
-- 🔒 **Secure**: Token-based authentication with usage tracking
-- 📦 **Easy Integration**: RESTful API that can be easily integrated into any application
+- 🚀 **Fast Processing**: Efficient image processing optimized for production
+- 🔒 **Secure Authentication**: Token-based authentication with rate limiting
+- 📦 **Easy Integration**: RESTful API with comprehensive documentation
+- 🎯 **Multiple Formats**: Support for JPEG, PNG, WebP, BMP, and TIFF
+- 💻 **Web Interface**: User-friendly demo interface included
 
-## Quick Start
+## 🚀 Quick Start
+
+### Using the Live API
+
+1. **Visit the demo:** https://bg-remover-frontend-vfhc.onrender.com
+2. **Generate an API key** using the web interface
+3. **Upload an image** and test background removal
+4. **Use the API** in your own applications
+
+### API Usage
+
+```bash
+# Generate API key
+curl -X POST "https://bg-remover-api-052i.onrender.com/api-keys" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My App"}'
+
+# Remove background
+curl -X POST "https://bg-remover-api-052i.onrender.com/remove-background?return_json=true" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "file=@your_image.jpg"
+```
+
+## 🏃‍♂️ Local Development
 
 ### Installation
 
-1. Clone or download this repository
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/HJBCodeForge/image-bg-remover-api.git
+   cd image-bg-remover-api
+   ```
+
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. Set up environment variables (optional):
-   ```bash
-   cp .env.example .env
-   # Edit .env with your preferred settings
-   ```
-
-4. Run the API:
+3. Run the API:
    ```bash
    python main.py
    ```
 
-The API will be available at `http://localhost:8000`
+4. Visit: http://localhost:8000
 
-### API Documentation
+## 📋 API Endpoints
 
-Once running, visit `http://localhost:8000/docs` for interactive API documentation.
+### Authentication
+All endpoints (except key generation) require an API key:
+```
+Authorization: Bearer YOUR_API_KEY
+```
 
-## API Endpoints
+### Core Endpoints
 
-### 1. Generate API Key
-```http
-POST /api-keys
-Content-Type: application/json
+- `POST /api-keys` - Generate new API key
+- `GET /api-keys` - List all API keys
+- `POST /remove-background` - Remove background from image
+- `DELETE /api-keys/{id}` - Deactivate API key
+- `GET /health` - Health check
+- `GET /docs` - Interactive API documentation
 
-{
-  "name": "My App API Key"
-}
+### Background Removal
+
+**Request:**
+```bash
+POST /remove-background?return_json=true
+Content-Type: multipart/form-data
+Authorization: Bearer YOUR_API_KEY
+
+file: [image file]
 ```
 
 **Response:**
 ```json
 {
-  "id": 1,
-  "key": "bgr_abc123...",
-  "name": "My App API Key",
-  "created_at": "2025-07-07T10:00:00Z",
-  "last_used": null,
-  "usage_count": 0,
-  "is_active": true
+  "success": true,
+  "message": "Background removed successfully",
+  "processed_image_url": "data:image/png;base64,iVBORw0KGgoAAAANS...",
+  "processing_time": 2.34
 }
 ```
 
-### 2. Remove Background
-```http
-POST /remove-background
-Authorization: Bearer bgr_abc123...
-Content-Type: multipart/form-data
+## 🛠️ Technical Details
 
-file: [image file]
-return_json: false (optional, default: false)
-```
+### Built With
+- **FastAPI** - Modern web framework for APIs
+- **rembg** - AI background removal library
+- **ONNX Runtime** - Optimized inference engine
+- **SQLite** - Database for API key management
+- **Pillow** - Image processing library
+
+### Supported Formats
+- **Input:** JPEG, PNG, WebP, BMP, TIFF
+- **Output:** PNG with transparency
+
+### Performance
+- **Processing Time:** 1-5 seconds per image
+- **File Size Limit:** 10MB per image
+- **Concurrent Requests:** Supported
+
+## 🔧 Configuration
+
+### Environment Variables
+- `HOST` - Server host (default: 0.0.0.0)
+- `PORT` - Server port (default: 8000)
+- `ENVIRONMENT` - Environment mode (development/production)
+
+### Database
+- Uses SQLite for simplicity and portability
+- Automatic table creation on startup
+- Persistent storage across restarts
+
+## 🚀 Deployment
+
+This project is deployed on Render.com with both backend and frontend services.
+
+### Files
+- `render.yaml` - Render deployment configuration
+- `requirements.txt` - Python dependencies
+- `main.py` - Application entry point
+
+### Architecture
+- **Backend:** Python web service
+- **Frontend:** Static site service
+- **Database:** SQLite (persistent across deployments)
+
+## 📖 Documentation
+
+- **API Docs:** https://bg-remover-api-052i.onrender.com/docs
+- **Deployment Guide:** See `DEPLOYMENT_SUCCESS.md`
+- **Live Demo:** https://bg-remover-frontend-vfhc.onrender.com
+
+## 🔒 Security
+
+- API key authentication required
+- Rate limiting and usage tracking
+- Input validation and sanitization
+- CORS protection configured
+- Secure error handling
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📜 License
+
+This project is open source and available under the MIT License.
+
+## 🆘 Support
+
+- Check the [API documentation](https://bg-remover-api-052i.onrender.com/docs)
+- Try the [live demo](https://bg-remover-frontend-vfhc.onrender.com)
+- Review the deployment guide in `DEPLOYMENT_SUCCESS.md`
+
+---
+
+**🎉 Ready to remove backgrounds? Try the live demo now!**
 
 **Response (Binary Image):**
 - Returns a PNG image with transparent background
