@@ -13,7 +13,7 @@ services:
   - type: web
     name: bg-remover-frontend
     runtime: static
-    buildCommand: echo "No build required for static site"
+    buildCommand: echo "Static site - no build required"
     staticPublishPath: .
     routes:
       - type: rewrite
