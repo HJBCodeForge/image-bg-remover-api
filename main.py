@@ -31,7 +31,7 @@ app.add_middleware(
         "https://*.onrender.com",
         "https://*.render.com",
         # Add your specific Render URLs here after deployment
-        # "https://your-frontend-name.onrender.com",
+        "https://bg-remover-frontend-vfhc.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -235,7 +235,14 @@ if __name__ == "__main__":
     
     # Use Render's PORT environment variable or default to 8000
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", os.getenv("API_PORT", 8000)))
+    port = int(os.getenv("PORT", 8000))  # Render always sets PORT
     
     print(f"Starting server on {host}:{port}")
-    uvicorn.run(app, host=host, port=port)
+    print(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
+    
+    uvicorn.run(
+        app, 
+        host=host, 
+        port=port,
+        log_level="info"
+    )
