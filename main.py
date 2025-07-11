@@ -26,15 +26,13 @@ app.add_middleware(
         "http://localhost:8080", 
         "http://127.0.0.1:3000",
         "http://127.0.0.1:8080",
-        "https://*.github.io",
-        "https://*.githubpages.com",
-        "https://*.onrender.com",
-        "https://*.render.com",
-        # Add your specific Render URLs here after deployment
+        "http://localhost:8000",
         "https://bg-remover-frontend-vfhc.onrender.com",
+        "https://bg-remover-api-052i.onrender.com",
+        "*"  # Allow all origins temporarily for debugging
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -62,8 +60,22 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "background-remover-api"}
+    """Health check endpoint with memory info"""
+    import psutil
+    import os
+    
+    try:
+        process = psutil.Process(os.getpid())
+        memory_info = process.memory_info()
+        
+        return {
+            "status": "healthy", 
+            "service": "background-remover-api",
+            "memory_mb": round(memory_info.rss / 1024 / 1024, 2),
+            "memory_percent": round(process.memory_percent(), 2)
+        }
+    except Exception:
+        return {"status": "healthy", "service": "background-remover-api"}
 
 @app.post("/api-keys", response_model=APIKeyResponse)
 async def create_api_key(
@@ -151,6 +163,18 @@ async def remove_background(
         # Read uploaded file
         image_bytes = await file.read()
         
+        # Check file size (limit to 5MB for free tier)
+        max_size = 5 * 1024 * 1024  # 5MB
+        if len(image_bytes) > max_size:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=ErrorResponse(
+                    success=False,
+                    error="File too large",
+                    details=f"File size must be less than {max_size // (1024 * 1024)}MB"
+                ).dict()
+            )
+        
         # Validate image
         if not bg_remover.validate_image(image_bytes):
             return JSONResponse(
@@ -190,6 +214,10 @@ async def remove_background(
             )
             
     except Exception as e:
+        # Clean up memory on error
+        import gc
+        gc.collect()
+        
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=ErrorResponse(

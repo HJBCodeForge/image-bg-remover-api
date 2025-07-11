@@ -212,8 +212,11 @@
                     <input type="text" id="apiKeyInput" placeholder="Enter your API key (bgr_...)">
                 </div>
                 <div class="form-group">
-                    <label for="imageFile">Select Image (JPEG, PNG, WebP, BMP, TIFF):</label>
+                    <label for="imageFile">Select Image (JPEG, PNG, WebP, BMP, TIFF - Max 5MB):</label>
                     <input type="file" id="imageFile" accept="image/jpeg,image/jpg,image/png,image/webp,image/bmp,image/tiff,image/tif,.jpg,.jpeg,.png,.webp,.bmp,.tiff,.tif">
+                    <small style="color: #666; font-size: 0.9em;">
+                        💡 For best performance, use images under 5MB. Large images will be automatically resized.
+                    </small>
                 </div>
                 <button class="btn" onclick="removeBackground()">Remove Background</button>
                 <div id="imageResult"></div>
@@ -355,9 +358,9 @@
                 return;
             }
             
-            // Check file size (limit to 10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                resultDiv.innerHTML = '<div class="result error">❌ File too large. Please upload an image smaller than 10MB.</div>';
+            // Check file size (limit to 5MB for free tier)
+            if (file.size > 5 * 1024 * 1024) {
+                resultDiv.innerHTML = '<div class="result error">❌ File too large. Please upload an image smaller than 5MB.</div>';
                 return;
             }
             
