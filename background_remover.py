@@ -1,14 +1,14 @@
 import io
 import time
 from PIL import Image
-from rembg import remove, Session
+from rembg import remove
 from typing import Tuple
 import gc
 
 class BackgroundRemover:
     def __init__(self):
-        # Use a more memory-efficient model
-        self.session = Session('u2net')  # Smaller model than default
+        # Keep it simple for now - just use the basic remove function
+        pass
     
     def remove_background(self, image_bytes: bytes) -> Tuple[bytes, float]:
         """
@@ -25,8 +25,8 @@ class BackgroundRemover:
             if max(input_image.size) > max_size:
                 input_image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
             
-            # Remove background using rembg with session
-            output_image = remove(input_image, session=self.session)
+            # Remove background using rembg
+            output_image = remove(input_image)
             
             # Convert to PNG bytes
             output_buffer = io.BytesIO()
