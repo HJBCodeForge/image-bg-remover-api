@@ -12,9 +12,11 @@ logger = logging.getLogger(__name__)
 
 # Try to import hybrid system, fallback to legacy if not available
 try:
-    from hybrid_remover import HybridBackgroundRemover
-    HYBRID_AVAILABLE = True
-    logger.info("Hybrid MediaPipe + rembg system available")
+    # Temporarily disable hybrid system for Railway deployment
+    # from hybrid_remover import HybridBackgroundRemover
+    HYBRID_AVAILABLE = False
+    HybridBackgroundRemover = None
+    logger.info("Hybrid system temporarily disabled for Railway deployment")
 except ImportError as e:
     HYBRID_AVAILABLE = False
     logger.warning(f"Hybrid system not available, using legacy rembg only: {str(e)}")
