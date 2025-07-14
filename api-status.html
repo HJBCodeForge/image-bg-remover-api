@@ -54,7 +54,7 @@
         
         <div class="status-box">
             <label>API URL:</label><br>
-            <input type="text" id="apiUrl" value="https://bg-remover-api-052i.onrender.com" placeholder="Enter API URL">
+            <input type="text" id="apiUrl" value="https://web-production-faaf.up.railway.app" placeholder="Enter API URL">
             <button onclick="checkApiStatus()">Check Status</button>
         </div>
         
@@ -162,7 +162,7 @@
         window.addEventListener('load', () => {
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             if (isLocal) {
-                document.getElementById('apiUrl').value = 'https://bg-remover-api-052i.onrender.com';
+                document.getElementById('apiUrl').value = 'https://web-production-faaf.up.railway.app';
             }
         });
     </script>
