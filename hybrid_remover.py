@@ -6,13 +6,26 @@ and optimal background removal based on image content.
 """
 
 import logging
-import cv2
 import numpy as np
-import mediapipe as mp
 from PIL import Image
 import io
 from typing import Tuple, Optional, Dict, Any
 import gc
+
+# Try to import cv2 and mediapipe with graceful fallback
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError as e:
+    CV2_AVAILABLE = False
+    logging.warning(f"OpenCV not available: {str(e)}")
+
+try:
+    import mediapipe as mp
+    MP_AVAILABLE = True
+except ImportError as e:
+    MP_AVAILABLE = False
+    logging.warning(f"MediaPipe not available: {str(e)}")
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +38,17 @@ class HybridBackgroundRemover:
     """
     
     def __init__(self):
+        # Check if dependencies are available
+        if not CV2_AVAILABLE or not MP_AVAILABLE:
+            raise ImportError("MediaPipe and OpenCV are required for hybrid system")
+        
         self.mp_selfie_segmentation = None
         self.mp_pose = None
         self.mp_face_detection = None
         self.rembg_sessions = {}
         self.detection_confidence = 0.5
+        
+        logger.info("HybridBackgroundRemover initialized")
         
     def _init_mediapipe(self):
         """Initialize MediaPipe models lazily"""

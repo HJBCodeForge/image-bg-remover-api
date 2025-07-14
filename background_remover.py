@@ -6,8 +6,15 @@ import gc
 import logging
 import numpy as np
 
-# Import hybrid system
-from hybrid_remover import HybridBackgroundRemover
+# Try to import hybrid system, fallback to legacy if not available
+try:
+    from hybrid_remover import HybridBackgroundRemover
+    HYBRID_AVAILABLE = True
+    logger.info("Hybrid MediaPipe + rembg system available")
+except ImportError as e:
+    HYBRID_AVAILABLE = False
+    logger.warning(f"Hybrid system not available, using legacy rembg only: {str(e)}")
+    HybridBackgroundRemover = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,8 +22,16 @@ logger = logging.getLogger(__name__)
 
 class BackgroundRemover:
     def __init__(self):
-        # Initialize hybrid MediaPipe + rembg system
-        self.hybrid_remover = HybridBackgroundRemover()
+        # Initialize hybrid MediaPipe + rembg system if available
+        if HYBRID_AVAILABLE:
+            try:
+                self.hybrid_remover = HybridBackgroundRemover()
+                logger.info("Hybrid system initialized successfully")
+            except Exception as e:
+                logger.warning(f"Failed to initialize hybrid system: {str(e)}, falling back to legacy")
+                self.hybrid_remover = None
+        else:
+            self.hybrid_remover = None
         
         # Keep legacy rembg support for fallback
         self.remove_func = None
@@ -214,11 +229,12 @@ class BackgroundRemover:
     def remove_background(self, image_bytes: bytes, model_hint: Optional[str] = None, 
                          enhance_quality: bool = True) -> Tuple[bytes, float]:
         """
-        Remove background using hybrid MediaPipe + rembg system
+        Remove background using hybrid MediaPipe + rembg system if available,
+        otherwise fallback to enhanced rembg system
         
         Args:
             image_bytes: Input image as bytes
-            model_hint: Ignored in hybrid mode (auto-detection used)
+            model_hint: Specific model to use ('human', 'object', 'general') or None for auto-detection
             enhance_quality: Whether to apply pre/post processing for better quality
         """
         start_time = time.time()
@@ -240,24 +256,35 @@ class BackgroundRemover:
                 if input_image.mode != 'RGB':
                     input_image = input_image.convert('RGB')
             
-            # Use hybrid system for detection and removal
-            try:
-                output_image, detection_result = self.hybrid_remover.process_image(input_image)
-                
-                # Log the detection and processing result
-                logger.info(f"Hybrid processing: {detection_result['primary_type']} "
-                           f"(confidence: {detection_result['confidence']:.2f}) "
-                           f"-> {detection_result['recommended_remover']} "
-                           f"({detection_result.get('recommended_model', 'default')})")
-                
-            except Exception as e:
-                logger.error(f"Hybrid processing failed: {str(e)}, falling back to legacy rembg")
-                # Fallback to legacy rembg system
+            # Try hybrid system first if available
+            if self.hybrid_remover:
+                try:
+                    output_image, detection_result = self.hybrid_remover.process_image(input_image)
+                    
+                    # Log the detection and processing result
+                    logger.info(f"Hybrid processing: {detection_result['primary_type']} "
+                               f"(confidence: {detection_result['confidence']:.2f}) "
+                               f"-> {detection_result['recommended_remover']} "
+                               f"({detection_result.get('recommended_model', 'default')})")
+                    
+                except Exception as e:
+                    logger.error(f"Hybrid processing failed: {str(e)}, falling back to legacy rembg")
+                    # Fall through to legacy system
+                    output_image = None
+            else:
+                output_image = None
+            
+            # Fallback to legacy rembg system if hybrid failed or not available
+            if output_image is None:
                 if not self.remove_func:
                     raise Exception("Both hybrid and legacy systems unavailable")
                 
                 # Use legacy detection and removal
-                image_type = self._detect_image_type(input_image)
+                if model_hint:
+                    image_type = model_hint
+                else:
+                    image_type = self._detect_image_type(input_image)
+                
                 best_model = self._choose_best_model(image_type)
                 session = self._ensure_session(best_model)
                 
@@ -266,7 +293,7 @@ class BackgroundRemover:
                 else:
                     output_image = self.remove_func(input_image)
                 
-                logger.info(f"Legacy fallback used: {best_model}")
+                logger.info(f"Legacy processing used: {best_model} for {image_type}")
             
             # Apply post-processing if enabled
             if enhance_quality:
@@ -308,7 +335,7 @@ class BackgroundRemover:
     
     def cleanup(self):
         """Clean up resources"""
-        if hasattr(self, 'hybrid_remover'):
+        if hasattr(self, 'hybrid_remover') and self.hybrid_remover:
             self.hybrid_remover.cleanup()
     
     def __del__(self):
