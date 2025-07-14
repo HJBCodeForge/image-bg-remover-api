@@ -170,13 +170,17 @@ async def list_api_keys(db: Session = Depends(get_db)):
 async def remove_background(
     file: UploadFile = File(...),
     return_json: bool = False,
+    model_hint: str = None,
+    enhance_quality: bool = True,
     api_key: APIKey = Depends(validate_api_key)
 ):
     """
-    Remove background from uploaded image
+    Remove background from uploaded image with advanced options
     
     - **file**: Image file to process
     - **return_json**: If true, returns JSON response with base64 image data
+    - **model_hint**: Specific model to use ('human', 'object', 'general') or None for auto-detection
+    - **enhance_quality**: Whether to apply pre/post processing for better quality (default: True)
     - **Authorization**: Bearer token with your API key
     """
     try:
@@ -206,9 +210,13 @@ async def remove_background(
                 ).dict()
             )
         
-        # Remove background
+        # Remove background with new parameters
         remover = get_background_remover()
-        processed_image_bytes, processing_time = remover.remove_background(image_bytes)
+        processed_image_bytes, processing_time = remover.remove_background(
+            image_bytes, 
+            model_hint=model_hint,
+            enhance_quality=enhance_quality
+        )
         
         if return_json:
             # Return JSON response with processing info

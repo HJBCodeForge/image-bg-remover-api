@@ -1,9 +1,10 @@
 import io
 import time
-from PIL import Image
-from typing import Tuple
+from PIL import Image, ImageEnhance, ImageFilter
+from typing import Tuple, Optional
 import gc
 import logging
+import numpy as np
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -14,7 +15,18 @@ class BackgroundRemover:
         # Import rembg here to handle different versions
         self.remove_func = None
         self.session = None
+        self.sessions = {}  # Store multiple sessions for different models
         self._session_initialized = False
+        
+        # Available models in order of preference for quality
+        self.available_models = [
+            'u2net_human_seg',    # Best for people/portraits
+            'u2net_cloth_seg',    # Best for clothing/fashion
+            'isnet-general-use',  # General purpose (if available)
+            'silueta',           # Good general purpose, memory efficient
+            'u2net',             # Original, reliable fallback
+            'u2net_lite'         # Fastest, least memory
+        ]
         
         try:
             logger.info("Attempting to import rembg...")
@@ -26,7 +38,7 @@ class BackgroundRemover:
             try:
                 from rembg import new_session
                 self.new_session = new_session
-                logger.info("Successfully imported new_session - will create session on first use")
+                logger.info("Successfully imported new_session - will create sessions on first use")
             except ImportError as e:
                 logger.warning(f"new_session not available: {e}")
                 self.new_session = None
@@ -41,39 +53,167 @@ class BackgroundRemover:
             self.remove_func = None
             self.new_session = None
     
-    def _ensure_session(self):
-        """Lazy initialization of rembg session to save memory on startup"""
+    def _ensure_session(self, model_name='auto'):
+        """
+        Lazy initialization of rembg session to save memory on startup
+        Now supports multiple models and automatic model selection
+        """
         if not self._session_initialized and self.new_session:
-            try:
-                logger.info("Creating rembg session on first use...")
-                # Try u2net_lite first (most memory efficient)
-                try:
-                    self.session = self.new_session('u2net_lite')
-                    logger.info("Successfully created u2net_lite session")
-                except Exception as e:
-                    logger.warning(f"Failed to create u2net_lite session: {e}")
-                    # Try silueta (also memory efficient)
+            self._session_initialized = True
+            
+        if model_name == 'auto':
+            # Try to create the best available session
+            for model in self.available_models:
+                if model not in self.sessions:
                     try:
-                        self.session = self.new_session('silueta')
-                        logger.info("Successfully created silueta session")
-                    except Exception as e2:
-                        logger.warning(f"Failed to create silueta session: {e2}")
-                        # Fall back to default u2net
-                        try:
-                            self.session = self.new_session('u2net')
-                            logger.info("Successfully created u2net session")
-                        except Exception as e3:
-                            logger.warning(f"Failed to create u2net session: {e3}")
-                            self.session = None
-            except Exception as e:
-                logger.error(f"Failed to create any session: {e}")
-                self.session = None
-            finally:
-                self._session_initialized = True
+                        logger.info(f"Creating session for model: {model}")
+                        session = self.new_session(model)
+                        self.sessions[model] = session
+                        logger.info(f"Successfully created {model} session")
+                        # Set as default session if it's the first successful one
+                        if not self.session:
+                            self.session = session
+                        return session
+                    except Exception as e:
+                        logger.warning(f"Failed to create {model} session: {e}")
+                        continue
+                else:
+                    # Return existing session
+                    return self.sessions[model]
+        else:
+            # Try to create specific model session
+            if model_name not in self.sessions:
+                try:
+                    logger.info(f"Creating session for specific model: {model_name}")
+                    session = self.new_session(model_name)
+                    self.sessions[model_name] = session
+                    logger.info(f"Successfully created {model_name} session")
+                    return session
+                except Exception as e:
+                    logger.warning(f"Failed to create {model_name} session: {e}")
+                    # Fall back to auto mode
+                    return self._ensure_session('auto')
+            else:
+                return self.sessions[model_name]
+        
+        # If all models fail, return None
+        logger.error("Failed to create any session")
+        return None
     
-    def remove_background(self, image_bytes: bytes) -> Tuple[bytes, float]:
+    def _preprocess_image(self, image: Image.Image) -> Image.Image:
+        """
+        Apply pre-processing to improve background removal accuracy
+        """
+        try:
+            # Convert to RGB if needed
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            
+            # Enhance contrast for better edge detection
+            enhancer = ImageEnhance.Contrast(image)
+            image = enhancer.enhance(1.2)
+            
+            # Enhance sharpness slightly for better edge definition
+            enhancer = ImageEnhance.Sharpness(image)
+            image = enhancer.enhance(1.1)
+            
+            # Apply subtle brightness adjustment if image is too dark
+            stat = image.histogram()
+            avg_brightness = sum(i * w for i, w in enumerate(stat[:256])) / sum(stat[:256])
+            if avg_brightness < 100:  # Image is quite dark
+                enhancer = ImageEnhance.Brightness(image)
+                image = enhancer.enhance(1.15)
+            
+            return image
+            
+        except Exception as e:
+            logger.warning(f"Pre-processing failed: {e}, using original image")
+            return image
+    
+    def _postprocess_image(self, image: Image.Image) -> Image.Image:
+        """
+        Apply post-processing to improve the quality of the result
+        """
+        try:
+            # Convert to RGBA if not already
+            if image.mode != 'RGBA':
+                image = image.convert('RGBA')
+            
+            # Get image data as numpy array for processing
+            img_array = np.array(image)
+            
+            # Improve alpha channel (transparency) quality
+            alpha = img_array[:, :, 3]
+            
+            # Apply median filter to reduce noise in alpha channel
+            # Note: This requires converting back and forth from PIL
+            alpha_img = Image.fromarray(alpha, mode='L')
+            alpha_img = alpha_img.filter(ImageFilter.MedianFilter(size=3))
+            alpha_filtered = np.array(alpha_img)
+            
+            # Enhance alpha channel contrast for cleaner edges
+            alpha_min, alpha_max = alpha_filtered.min(), alpha_filtered.max()
+            if alpha_max > alpha_min:
+                alpha_enhanced = ((alpha_filtered - alpha_min) / (alpha_max - alpha_min) * 255).astype(np.uint8)
+            else:
+                alpha_enhanced = alpha_filtered
+            
+            # Apply the enhanced alpha channel back
+            img_array[:, :, 3] = alpha_enhanced
+            
+            # Convert back to PIL Image
+            processed_image = Image.fromarray(img_array, 'RGBA')
+            
+            return processed_image
+            
+        except Exception as e:
+            logger.warning(f"Post-processing failed: {e}, using original result")
+            return image
+    
+    def _detect_image_type(self, image: Image.Image) -> str:
+        """
+        Detect the type of image to choose the best model
+        """
+        try:
+            # Simple heuristic based on image characteristics
+            width, height = image.size
+            aspect_ratio = width / height
+            
+            # If image is roughly portrait-oriented and not too wide, likely a person
+            if 0.5 <= aspect_ratio <= 2.0 and height >= 400:
+                return 'human'
+            
+            # If image is very wide or square and large, might be product/object
+            if aspect_ratio > 2.0 or (0.8 <= aspect_ratio <= 1.2 and min(width, height) >= 300):
+                return 'object'
+            
+            # Default to general purpose
+            return 'general'
+            
+        except Exception as e:
+            logger.warning(f"Image type detection failed: {e}")
+            return 'general'
+    
+    def _choose_best_model(self, image_type: str) -> str:
+        """
+        Choose the best model based on image type
+        """
+        if image_type == 'human':
+            return 'u2net_human_seg'  # Best for people
+        elif image_type == 'object':
+            return 'silueta'  # Good for objects
+        else:
+            return 'auto'  # Let the system choose
+    
+    def remove_background(self, image_bytes: bytes, model_hint: Optional[str] = None, 
+                         enhance_quality: bool = True) -> Tuple[bytes, float]:
         """
         Remove background from image bytes and return processed image bytes and processing time
+        
+        Args:
+            image_bytes: Input image as bytes
+            model_hint: Specific model to use ('human', 'object', 'general') or None for auto-detection
+            enhance_quality: Whether to apply pre/post processing for better quality
         """
         if not self.remove_func:
             raise Exception("Background removal service not available")
@@ -81,30 +221,48 @@ class BackgroundRemover:
         start_time = time.time()
         
         try:
-            # Ensure session is created (lazy loading)
-            self._ensure_session()
-            
             # Open the image
             input_image = Image.open(io.BytesIO(image_bytes))
             
-            # More aggressive resizing to save memory
-            max_size = 800  # Reduced from 1024 to save memory
+            # Smart resizing - preserve more detail for better results
+            max_size = 1200  # Increased from 800 for better quality
             if max(input_image.size) > max_size:
+                # Use high-quality resampling
                 input_image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
             
-            # Convert to RGB if needed (some formats cause issues)
-            if input_image.mode != 'RGB':
-                input_image = input_image.convert('RGB')
+            # Detect image type and choose best model
+            if model_hint:
+                image_type = model_hint
+            else:
+                image_type = self._detect_image_type(input_image)
+            
+            best_model = self._choose_best_model(image_type)
+            logger.info(f"Using model strategy: {best_model} for image type: {image_type}")
+            
+            # Apply pre-processing if enabled
+            if enhance_quality:
+                input_image = self._preprocess_image(input_image)
+            else:
+                # Basic conversion to RGB if needed
+                if input_image.mode != 'RGB':
+                    input_image = input_image.convert('RGB')
+            
+            # Ensure session is created with the best model
+            session = self._ensure_session(best_model)
             
             # Remove background using rembg with session if available
-            if self.session:
-                output_image = self.remove_func(input_image, session=self.session)
+            if session:
+                output_image = self.remove_func(input_image, session=session)
             else:
                 output_image = self.remove_func(input_image)
             
-            # Convert to PNG bytes
+            # Apply post-processing if enabled
+            if enhance_quality:
+                output_image = self._postprocess_image(output_image)
+            
+            # Convert to PNG bytes with optimization
             output_buffer = io.BytesIO()
-            output_image.save(output_buffer, format='PNG', optimize=True)
+            output_image.save(output_buffer, format='PNG', optimize=True, compress_level=6)
             output_bytes = output_buffer.getvalue()
             
             # Clean up memory
@@ -114,6 +272,7 @@ class BackgroundRemover:
             gc.collect()
             
             processing_time = time.time() - start_time
+            logger.info(f"Background removal completed in {processing_time:.2f}s using {best_model}")
             
             return output_bytes, processing_time
             

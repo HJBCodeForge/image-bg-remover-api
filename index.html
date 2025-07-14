@@ -186,6 +186,24 @@
 										<label for="imageFile">Select Image:</label>
 										<input type="file" id="imageFile" accept="image/*" />
 									</div>
+									<div class="form-group">
+										<label for="modelHint">Model Hint (optional):</label>
+										<select id="modelHint">
+											<option value="">Auto-detect (recommended)</option>
+											<option value="human">Human subjects</option>
+											<option value="object">Objects/products</option>
+											<option value="general">General content</option>
+										</select>
+									</div>
+									<div class="form-group">
+										<label>
+											<input type="checkbox" id="enhanceQuality" checked />
+											Enhanced Quality Processing
+										</label>
+										<small style="display: block; margin-top: 5px; color: #666;">
+											Applies pre/post processing for better results (recommended)
+										</small>
+									</div>
 									<button onclick="removeBackground()" class="button primary">Remove Background</button>
 									<div id="imageResult"></div>
 								</div>
@@ -251,9 +269,11 @@ const response = await fetch('https://web-production-faaf.up.railway.app/api-key
 });
 const apiKey = await response.json();
 
-// Remove Background
+// Remove Background (with enhanced options)
 const formData = new FormData();
 formData.append('file', imageFile);
+formData.append('model_hint', 'human');  // Optional: 'human', 'object', 'general'
+formData.append('enhance_quality', 'true');  // Optional: improved processing
 
 const result = await fetch('https://web-production-faaf.up.railway.app/remove-background?return_json=true', {
   method: 'POST',
@@ -529,6 +549,16 @@ const processedImage = await result.json();</code></pre>
 					try {
 						const formData = new FormData();
 						formData.append('file', file);
+						
+						// Get the new parameters
+						const modelHint = document.getElementById('modelHint').value;
+						const enhanceQuality = document.getElementById('enhanceQuality').checked;
+						
+						// Add new parameters to the form data
+						if (modelHint) {
+							formData.append('model_hint', modelHint);
+						}
+						formData.append('enhance_quality', enhanceQuality);
 						
 						// Add return_json as a query parameter
 						const url = `${API_BASE_URL}/remove-background?return_json=true`;
