@@ -35,6 +35,7 @@ app.add_middleware(
         "http://127.0.0.1:8080",
         "http://localhost:8000",
         "https://bg-remover-frontend-vfhc.onrender.com",
+        "https://bg-remover-frontend-tau.vercel.app",
         "https://web-production-faaf.up.railway.app",
         "*"  # Allow all origins temporarily for debugging
     ],
