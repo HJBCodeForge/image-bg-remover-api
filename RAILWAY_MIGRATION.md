@@ -31,6 +31,7 @@ Once deployed, Railway will give you a URL like:
 Update these files:
 - `demo.html` - Change API_BASE_URL
 - `index.html` - Change API_BASE_URL  
+- `apiindex.html` - Change API_BASE_URL  
 - `api-status.html` - Change default URL
 
 ### 5. Deploy Frontend

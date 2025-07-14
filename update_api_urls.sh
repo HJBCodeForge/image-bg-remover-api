@@ -16,13 +16,13 @@ NEW_URL=${NEW_URL%/}
 
 echo "Updating API URLs to: $NEW_URL"
 
-# Update demo.html
-sed -i.bak "s|https://bg-remover-api-052i.onrender.com|$NEW_URL|g" demo.html
-echo "✅ Updated demo.html"
-
 # Update index.html
-sed -i.bak "s|https://bg-remover-api-052i.onrender.com|$NEW_URL|g" index.html
+sed -i.bak "s|https://web-production-faaf.up.railway.app|$NEW_URL|g" index.html
 echo "✅ Updated index.html"
+
+# Update apiindex.html
+sed -i.bak "s|https://bg-remover-api-052i.onrender.com|$NEW_URL|g" apiindex.html
+echo "✅ Updated apiindex.html"
 
 # Update api-status.html
 sed -i.bak "s|https://bg-remover-api-052i.onrender.com|$NEW_URL|g" api-status.html
