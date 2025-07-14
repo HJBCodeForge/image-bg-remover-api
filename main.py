@@ -81,21 +81,31 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint with memory info"""
-    import psutil
-    import os
-    
     try:
+        import psutil
+        import os
+        
         process = psutil.Process(os.getpid())
         memory_info = process.memory_info()
+        
+        # Get system memory info
+        system_memory = psutil.virtual_memory()
         
         return {
             "status": "healthy", 
             "service": "background-remover-api",
             "memory_mb": round(memory_info.rss / 1024 / 1024, 2),
-            "memory_percent": round(process.memory_percent(), 2)
+            "memory_percent": round(process.memory_percent(), 2),
+            "system_memory_total_mb": round(system_memory.total / 1024 / 1024, 2),
+            "system_memory_available_mb": round(system_memory.available / 1024 / 1024, 2),
+            "system_memory_used_percent": system_memory.percent
         }
-    except Exception:
-        return {"status": "healthy", "service": "background-remover-api"}
+    except Exception as e:
+        return {
+            "status": "healthy", 
+            "service": "background-remover-api",
+            "error": str(e)
+        }
 
 @app.post("/api-keys", response_model=APIKeyResponse)
 async def create_api_key(
@@ -256,6 +266,52 @@ async def remove_background(
             ).dict()
         )
 
+@app.post("/remove-background-simple")
+async def remove_background_simple(
+    file: UploadFile = File(...),
+    api_key: APIKey = Depends(validate_api_key)
+):
+    """
+    Simple background removal endpoint for debugging
+    Uses basic rembg without any enhancements
+    """
+    try:
+        # Read uploaded file
+        image_bytes = await file.read()
+        
+        # Basic validation
+        if len(image_bytes) > 5 * 1024 * 1024:  # 5MB limit
+            raise HTTPException(status_code=400, detail="File too large")
+        
+        # Try basic rembg
+        from rembg import remove
+        from PIL import Image
+        import io
+        
+        # Simple processing
+        input_image = Image.open(io.BytesIO(image_bytes))
+        output_image = remove(input_image)
+        
+        # Convert to PNG
+        output_buffer = io.BytesIO()
+        output_image.save(output_buffer, format='PNG')
+        output_bytes = output_buffer.getvalue()
+        
+        return StreamingResponse(
+            io.BytesIO(output_bytes),
+            media_type="image/png"
+        )
+        
+    except Exception as e:
+        import traceback
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": f"Simple processing failed: {str(e)}",
+                "traceback": traceback.format_exc()
+            }
+        )
+
 @app.delete("/api-keys/{api_key_id}")
 async def deactivate_api_key(
     api_key_id: int,
@@ -283,6 +339,32 @@ async def deactivate_api_key(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deactivating API key: {str(e)}"
         )
+
+@app.get("/test-rembg")
+async def test_rembg():
+    """Test endpoint to check rembg initialization"""
+    try:
+        # Test basic rembg import
+        from rembg import remove
+        
+        # Test session creation
+        from rembg import new_session
+        
+        # Try to create a simple session
+        session = new_session('u2net')
+        
+        return {
+            "status": "success",
+            "message": "rembg is working properly",
+            "session_created": True
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "message": f"rembg test failed: {str(e)}",
+            "traceback": traceback.format_exc()
+        }
 
 if __name__ == "__main__":
     import uvicorn
