@@ -5,6 +5,11 @@ from typing import Tuple, Optional
 import gc
 import logging
 import numpy as np
+import os
+
+# Force OpenCV to use headless mode
+os.environ['OPENCV_HEADLESS'] = '1'
+os.environ['DISPLAY'] = ''
 
 # Configure logging first
 logging.basicConfig(level=logging.INFO)
@@ -53,17 +58,36 @@ class BackgroundRemover:
         
         try:
             logger.info("Attempting to import rembg for fallback...")
-            from rembg import remove
-            self.remove_func = remove
-            logger.info("Successfully imported rembg.remove")
+            
+            # Try to import rembg without cv2 dependency first
+            try:
+                from rembg import remove
+                self.remove_func = remove
+                logger.info("Successfully imported rembg.remove")
+            except ImportError as cv2_error:
+                logger.warning(f"rembg import failed (likely cv2 issue): {cv2_error}")
+                # Try to work around cv2 issue
+                try:
+                    # Force headless mode for OpenCV
+                    import os
+                    os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+                    from rembg import remove
+                    self.remove_func = remove
+                    logger.info("Successfully imported rembg.remove with headless workaround")
+                except ImportError as e:
+                    logger.error(f"Could not import rembg even with workaround: {e}")
+                    self.remove_func = None
             
             # Import new_session but don't create session until needed (lazy loading)
-            try:
-                from rembg import new_session
-                self.new_session = new_session
-                logger.info("Successfully imported new_session - will create sessions on first use")
-            except ImportError as e:
-                logger.warning(f"new_session not available: {e}")
+            if self.remove_func:
+                try:
+                    from rembg import new_session
+                    self.new_session = new_session
+                    logger.info("Successfully imported new_session - will create sessions on first use")
+                except ImportError as e:
+                    logger.warning(f"new_session not available: {e}")
+                    self.new_session = None
+            else:
                 self.new_session = None
                 
         except ImportError as e:
