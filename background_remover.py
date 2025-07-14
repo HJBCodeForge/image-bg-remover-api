@@ -6,13 +6,19 @@ import gc
 import logging
 import numpy as np
 
+# Import hybrid system
+from hybrid_remover import HybridBackgroundRemover
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class BackgroundRemover:
     def __init__(self):
-        # Import rembg here to handle different versions
+        # Initialize hybrid MediaPipe + rembg system
+        self.hybrid_remover = HybridBackgroundRemover()
+        
+        # Keep legacy rembg support for fallback
         self.remove_func = None
         self.session = None
         self.sessions = {}  # Store multiple sessions for different models
@@ -29,7 +35,7 @@ class BackgroundRemover:
         ]
         
         try:
-            logger.info("Attempting to import rembg...")
+            logger.info("Attempting to import rembg for fallback...")
             from rembg import remove
             self.remove_func = remove
             logger.info("Successfully imported rembg.remove")
@@ -208,36 +214,23 @@ class BackgroundRemover:
     def remove_background(self, image_bytes: bytes, model_hint: Optional[str] = None, 
                          enhance_quality: bool = True) -> Tuple[bytes, float]:
         """
-        Remove background from image bytes and return processed image bytes and processing time
+        Remove background using hybrid MediaPipe + rembg system
         
         Args:
             image_bytes: Input image as bytes
-            model_hint: Specific model to use ('human', 'object', 'general') or None for auto-detection
+            model_hint: Ignored in hybrid mode (auto-detection used)
             enhance_quality: Whether to apply pre/post processing for better quality
         """
-        if not self.remove_func:
-            raise Exception("Background removal service not available")
-            
         start_time = time.time()
         
         try:
             # Open the image
             input_image = Image.open(io.BytesIO(image_bytes))
             
-            # Smart resizing - preserve more detail for better results
-            max_size = 1200  # Increased from 800 for better quality
+            # Smart resizing - preserve detail for better results
+            max_size = 1200
             if max(input_image.size) > max_size:
-                # Use high-quality resampling
                 input_image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-            
-            # Detect image type and choose best model
-            if model_hint:
-                image_type = model_hint
-            else:
-                image_type = self._detect_image_type(input_image)
-            
-            best_model = self._choose_best_model(image_type)
-            logger.info(f"Using model strategy: {best_model} for image type: {image_type}")
             
             # Apply pre-processing if enabled
             if enhance_quality:
@@ -247,14 +240,33 @@ class BackgroundRemover:
                 if input_image.mode != 'RGB':
                     input_image = input_image.convert('RGB')
             
-            # Ensure session is created with the best model
-            session = self._ensure_session(best_model)
-            
-            # Remove background using rembg with session if available
-            if session:
-                output_image = self.remove_func(input_image, session=session)
-            else:
-                output_image = self.remove_func(input_image)
+            # Use hybrid system for detection and removal
+            try:
+                output_image, detection_result = self.hybrid_remover.process_image(input_image)
+                
+                # Log the detection and processing result
+                logger.info(f"Hybrid processing: {detection_result['primary_type']} "
+                           f"(confidence: {detection_result['confidence']:.2f}) "
+                           f"-> {detection_result['recommended_remover']} "
+                           f"({detection_result.get('recommended_model', 'default')})")
+                
+            except Exception as e:
+                logger.error(f"Hybrid processing failed: {str(e)}, falling back to legacy rembg")
+                # Fallback to legacy rembg system
+                if not self.remove_func:
+                    raise Exception("Both hybrid and legacy systems unavailable")
+                
+                # Use legacy detection and removal
+                image_type = self._detect_image_type(input_image)
+                best_model = self._choose_best_model(image_type)
+                session = self._ensure_session(best_model)
+                
+                if session:
+                    output_image = self.remove_func(input_image, session=session)
+                else:
+                    output_image = self.remove_func(input_image)
+                
+                logger.info(f"Legacy fallback used: {best_model}")
             
             # Apply post-processing if enabled
             if enhance_quality:
@@ -272,7 +284,7 @@ class BackgroundRemover:
             gc.collect()
             
             processing_time = time.time() - start_time
-            logger.info(f"Background removal completed in {processing_time:.2f}s using {best_model}")
+            logger.info(f"Background removal completed in {processing_time:.2f}s")
             
             return output_bytes, processing_time
             
@@ -293,3 +305,12 @@ class BackgroundRemover:
             return True
         except Exception:
             return False
+    
+    def cleanup(self):
+        """Clean up resources"""
+        if hasattr(self, 'hybrid_remover'):
+            self.hybrid_remover.cleanup()
+    
+    def __del__(self):
+        """Destructor to ensure cleanup"""
+        self.cleanup()
