@@ -277,7 +277,7 @@ class BackgroundRemover:
             # Fallback to legacy rembg system if hybrid failed or not available
             if output_image is None:
                 if not self.remove_func:
-                    raise Exception("Both hybrid and legacy systems unavailable")
+                    raise Exception("Both hybrid and legacy systems unavailable - rembg not properly initialized")
                 
                 # Use legacy detection and removal
                 if model_hint:
@@ -286,14 +286,18 @@ class BackgroundRemover:
                     image_type = self._detect_image_type(input_image)
                 
                 best_model = self._choose_best_model(image_type)
+                logger.info(f"Attempting legacy processing with model: {best_model} for type: {image_type}")
+                
                 session = self._ensure_session(best_model)
                 
                 if session:
+                    logger.info("Using session-based removal")
                     output_image = self.remove_func(input_image, session=session)
                 else:
+                    logger.info("Using basic removal without session")
                     output_image = self.remove_func(input_image)
                 
-                logger.info(f"Legacy processing used: {best_model} for {image_type}")
+                logger.info(f"Legacy processing completed: {best_model} for {image_type}")
             
             # Apply post-processing if enabled
             if enhance_quality:
@@ -318,6 +322,14 @@ class BackgroundRemover:
         except Exception as e:
             # Clean up on error
             gc.collect()
+            logger.error(f"Error processing image: {str(e)}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            
+            # Log more details for debugging
+            if hasattr(e, '__traceback__'):
+                import traceback
+                logger.error(f"Full traceback: {traceback.format_exc()}")
+            
             raise Exception(f"Error processing image: {str(e)}")
     
     def validate_image(self, image_bytes: bytes) -> bool:
