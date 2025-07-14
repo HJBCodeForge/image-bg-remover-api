@@ -101,6 +101,35 @@ git push
 ✅ **Better performance** (8 vCPU vs 1 vCPU)
 ✅ **Reliable service** (no random shutdowns)
 
+## Update: Fixed PORT Environment Variable Issue
+
+### Problem
+Getting error: `Error: Invalid value for '--port': '$PORT' is not a valid integer.`
+
+### Root Cause
+The Dockerfile was trying to use `$PORT` directly in the CMD instruction, but environment variables aren't expanded in exec form CMD.
+
+### Solution Applied
+1. **Created startup script** (`start.sh`) that properly handles environment variables
+2. **Updated Dockerfile** to use the startup script instead of direct uvicorn command
+3. **Updated railway.json** to use the startup script
+4. **Updated Procfile** for consistency
+
+### Files Modified
+- `start.sh` - New startup script with proper PORT handling
+- `Dockerfile` - Updated to use startup script
+- `railway.json` - Updated start command
+- `Procfile` - Updated for consistency
+
+### How it works
+```bash
+# start.sh handles the PORT variable properly
+PORT=${PORT:-8000}
+exec uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+This ensures Railway's PORT environment variable is correctly passed to uvicorn.
+
 ## Files Modified
 - `Dockerfile` - Created Railway-compatible Docker configuration
 - `railway.json` - Simplified Railway configuration
