@@ -6,6 +6,10 @@ import gc
 import logging
 import numpy as np
 
+# Configure logging first
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Try to import hybrid system, fallback to legacy if not available
 try:
     from hybrid_remover import HybridBackgroundRemover
@@ -15,10 +19,6 @@ except ImportError as e:
     HYBRID_AVAILABLE = False
     logger.warning(f"Hybrid system not available, using legacy rembg only: {str(e)}")
     HybridBackgroundRemover = None
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class BackgroundRemover:
     def __init__(self):
