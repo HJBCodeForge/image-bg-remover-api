@@ -438,12 +438,22 @@ const processedImageBlob = await result.blob();</code></pre>
 			<script src="assets/js/main.js"></script>
 			
 			<script>
-				// Configuration
-				const API_BASE_URL = 'https://web-production-faaf.up.railway.app';
+				// Configuration - Auto-detect API URL
+				function getApiUrl() {
+					// Check if we're running locally
+					if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+						return 'http://localhost:8000';
+					}
+					// Production URL
+					return 'https://web-production-faaf.up.railway.app';
+				}
+				
+				const API_BASE_URL = getApiUrl();
+				console.log('API_BASE_URL:', API_BASE_URL);
 				
 				// Check if API is properly configured
 				function checkApiConfiguration() {
-					if (API_BASE_URL.includes('your-api-name') || API_BASE_URL.includes('localhost')) {
+					if (API_BASE_URL.includes('your-api-name')) {
 						const warningDiv = document.createElement('div');
 						warningDiv.className = 'demo-result error';
 						warningDiv.style.margin = '20px 0';
@@ -601,10 +611,13 @@ const processedImageBlob = await result.blob();</code></pre>
 							formData.append('alpha_matting_erode_structure_size', document.getElementById('erodeSize').value);
 							formData.append('alpha_matting_base_size', document.getElementById('baseSize').value);
 						}
+									// Create AbortController for timeout
+					const controller = new AbortController();
+					const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
 						
-						// Create AbortController for timeout
-						const controller = new AbortController();
-						const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
+						console.log('Starting background removal request...');
+						console.log('API URL:', `${API_BASE_URL}/remove-background`);
+						console.log('API Key:', apiKey ? 'Present' : 'Missing');
 						
 						const response = await fetch(`${API_BASE_URL}/remove-background`, {
 							method: 'POST',
@@ -636,19 +649,20 @@ const processedImageBlob = await result.blob();</code></pre>
 								</div>
 							</div>
 						`;
-						
-					} catch (error) {
-						let errorMessage = error.message;
-						
-						// Handle specific error types
-						if (error.name === 'AbortError') {
-							errorMessage = 'Request timed out. Please try again with a smaller image.';
-						} else if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-							errorMessage = `Connection Failed: Cannot connect to ${API_BASE_URL}`;
-						}
-						
-						resultDiv.innerHTML = `<div class="demo-result error">❌ ${errorMessage}</div>`;
+									} catch (error) {
+					let errorMessage = error.message;
+					
+					// Handle specific error types
+					if (error.name === 'AbortError') {
+						errorMessage = 'Request timed out after 5 minutes. Please try again with a smaller image or check your internet connection.';
+					} else if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+						errorMessage = `Connection Failed: Cannot connect to ${API_BASE_URL}. Make sure the API server is running.`;
+					} else if (error.message.includes('NetworkError') || error.message.includes('net::')) {
+						errorMessage = 'Network error. Please check your internet connection and try again.';
 					}
+					
+					resultDiv.innerHTML = `<div class="demo-result error">❌ ${errorMessage}</div>`;
+				}
 				}
 				
 				// Alpha matting controls
