@@ -25,24 +25,28 @@ app = FastAPI(
 
 logger.info("Starting Background Remover API...")
 
-# Add CORS middleware
+# Add CORS middleware - must be added before other middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:8080", 
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8080",
-        "http://localhost:8000",
-        "https://bg-remover-frontend-vfhc.onrender.com",
-        "https://bg-remover-frontend-tau.vercel.app",
-        "https://web-production-faaf.up.railway.app",
-        "*"  # Allow all origins temporarily for debugging
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins for debugging
+    allow_credentials=False,  # Must be False when using wildcard origins
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Add explicit OPTIONS handler for preflight requests
+@app.options("/{path:path}")
+async def handle_options(path: str):
+    """Handle preflight OPTIONS requests"""
+    return JSONResponse(
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400"
+        }
+    )
 
 # Initialize background remover lazily
 logger.info("Setting up background remover (lazy initialization)...")
