@@ -217,10 +217,13 @@ async def generate_api_key_endpoint(
         logger.info(f"API key generated successfully: {api_key[:8]}...")
         
         return APIKeyResponse(
-            api_key=api_key,
+            id=db_api_key.id,
+            key=api_key,
             name=key_name,
-            status="active",
-            created_at=db_api_key.created_at.isoformat()
+            created_at=db_api_key.created_at,
+            last_used=None,
+            usage_count=0,
+            is_active=True
         )
     except Exception as e:
         logger.error(f"Failed to generate API key: {e}")
