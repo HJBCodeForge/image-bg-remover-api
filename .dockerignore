@@ -37,3 +37,20 @@ assets/
 images/
 uploads/
 bg_remover.db
+# Exclude large model files except essential one
+backgroundremover-main/models/u2aa
+backgroundremover-main/models/u2ab
+backgroundremover-main/models/u2ac
+backgroundremover-main/models/u2ad
+backgroundremover-main/models/u2haa
+backgroundremover-main/models/u2hab
+backgroundremover-main/models/u2hac
+backgroundremover-main/models/u2had
+# Keep only u2netp.pth which is the smallest and most efficient
+backgroundremover-main/examplefiles/
+backgroundremover-main/olddist/
+backgroundremover-main/.github/
+backgroundremover-main/.git*
+backgroundremover-main/dist/
+backgroundremover-main/build/
+backgroundremover-main/*.egg-info/
