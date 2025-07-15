@@ -167,7 +167,7 @@
 						<div class="inner">
 							<div class="demo-container">
 								<div class="demo-section">
-									<h3>1. Generate API Key</h3>
+									<h3>🔑 Generate API Key</h3>
 									<div class="form-group">
 										<label for="keyName">API Key Name:</label>
 										<input type="text" id="keyName" placeholder="Enter a name for your API key" />
@@ -177,7 +177,51 @@
 								</div>
 								
 								<div class="demo-section">
-									<h3>2. Remove Background</h3>
+									<h3>🤖 Model Selection</h3>
+									<div class="form-group">
+										<label for="modelHint">Choose Model:</label>
+										<select id="modelHint">
+											<option value="human">Human Segmentation - Best for people and portraits</option>
+											<option value="object">Object Detection - Best for products and objects</option>
+											<option value="general">General Purpose - Balanced performance</option>
+										</select>
+									</div>
+								</div>
+								
+								<div class="demo-section">
+									<h3>🎨 Alpha Matting Options</h3>
+									<div class="form-group">
+										<label>
+											<input type="checkbox" id="alphaMatting" checked />
+											Enable Alpha Matting (Better edge quality)
+										</label>
+									</div>
+									<div id="alphaMattingOptions" style="margin-left: 20px;">
+										<div class="form-group">
+											<label for="foregroundThreshold">Foreground Threshold (0-255):</label>
+											<input type="range" id="foregroundThreshold" min="0" max="255" value="240" />
+											<span id="foregroundValue">240</span>
+										</div>
+										<div class="form-group">
+											<label for="backgroundThreshold">Background Threshold (0-255):</label>
+											<input type="range" id="backgroundThreshold" min="0" max="255" value="10" />
+											<span id="backgroundValue">10</span>
+										</div>
+										<div class="form-group">
+											<label for="erodeSize">Erosion Size (1-20):</label>
+											<input type="range" id="erodeSize" min="1" max="20" value="10" />
+											<span id="erodeValue">10</span>
+										</div>
+										<div class="form-group">
+											<label for="baseSize">Base Size (500-2000):</label>
+											<input type="range" id="baseSize" min="500" max="2000" value="1000" />
+											<span id="baseSizeValue">1000</span>
+										</div>
+									</div>
+								</div>
+								
+								<div class="demo-section">
+									<h3>📁 Remove Background</h3>
 									<div class="form-group">
 										<label for="apiKeyInput">Your API Key:</label>
 										<input type="text" id="apiKeyInput" placeholder="Enter your API key" />
@@ -188,8 +232,8 @@
 									</div>
 									<div class="form-group">
 										<label>
-											<input type="checkbox" id="enhanceQuality" checked />
-											Enhanced Quality Processing
+											<input type="checkbox" id="returnJson" />
+											Return JSON Response (with base64 image)
 										</label>
 									</div>
 									<button onclick="removeBackground()" class="button primary">Remove Background</button>
@@ -528,8 +572,8 @@ const processedImage = await result.json();</code></pre>
 					resultDiv.innerHTML = `
 						<div class="loading">
 							<div class="spinner"></div>
-							<p>Processing your image... This may take a few seconds</p>
-							<p style="font-size: 0.9em; color: #aaa;">First request may take longer as the API starts up</p>
+							<p>Processing your image with BackgroundRemover-main...</p>
+							<p style="font-size: 0.9em; color: #aaa;">Using advanced AI with alpha matting for better edges</p>
 						</div>
 					`;
 					
@@ -537,23 +581,95 @@ const processedImage = await result.json();</code></pre>
 						const formData = new FormData();
 						formData.append('file', file);
 						
-						// Get the quality enhancement setting
-						const enhanceQuality = document.getElementById('enhanceQuality').checked;
-						formData.append('enhance_quality', enhanceQuality);
+						// Get form values
+						const modelHint = document.getElementById('modelHint').value;
+						const alphaMatting = document.getElementById('alphaMatting').checked;
+						const returnJson = document.getElementById('returnJson').checked;
 						
-						// Add return_json as a query parameter
-						const url = `${API_BASE_URL}/remove-background?return_json=true`;
+						formData.append('model_hint', modelHint);
+						formData.append('alpha_matting', alphaMatting);
+						formData.append('return_json', returnJson);
+						
+						// Alpha matting parameters (only if enabled)
+						if (alphaMatting) {
+							formData.append('alpha_matting_foreground_threshold', document.getElementById('foregroundThreshold').value);
+							formData.append('alpha_matting_background_threshold', document.getElementById('backgroundThreshold').value);
+							formData.append('alpha_matting_erode_structure_size', document.getElementById('erodeSize').value);
+							formData.append('alpha_matting_base_size', document.getElementById('baseSize').value);
+						}
 						
 						// Create AbortController for timeout
 						const controller = new AbortController();
 						const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
 						
-						const response = await fetch(url, {
+						const response = await fetch(`${API_BASE_URL}/remove-background`, {
 							method: 'POST',
 							headers: {
 								'Authorization': `Bearer ${apiKey}`
 							},
 							body: formData,
+							signal: controller.signal
+						});
+						
+						clearTimeout(timeoutId);
+						
+						if (!response.ok) {
+							const errorData = await response.json();
+							throw new Error(errorData.details || errorData.error || `HTTP error! status: ${response.status}`);
+						}
+						
+						if (returnJson) {
+							// Handle JSON response
+							const result = await response.json();
+							
+							resultDiv.innerHTML = `
+								<div class="demo-result success">
+									<strong>✅ Background Removed Successfully!</strong><br>
+									<strong>Model Used:</strong> ${result.model_used}<br>
+									<strong>Processing Time:</strong> ${result.processing_time.toFixed(2)}s<br>
+									<strong>Alpha Matting:</strong> ${alphaMatting ? 'Enabled' : 'Disabled'}<br>
+									<div style="margin-top: 15px;">
+										<strong>Result:</strong><br>
+										<img src="${result.processed_image_url}" style="max-width: 100%; border: 1px solid #ddd; border-radius: 5px;" />
+									</div>
+								</div>
+							`;
+						} else {
+							// Handle binary response
+							const blob = await response.blob();
+							const imageUrl = URL.createObjectURL(blob);
+							const processingTime = response.headers.get('X-Processing-Time');
+							const modelUsed = response.headers.get('X-Model-Used');
+							
+							resultDiv.innerHTML = `
+								<div class="demo-result success">
+									<strong>✅ Background Removed Successfully!</strong><br>
+									<strong>Model Used:</strong> ${modelUsed}<br>
+									<strong>Processing Time:</strong> ${processingTime}s<br>
+									<strong>Alpha Matting:</strong> ${alphaMatting ? 'Enabled' : 'Disabled'}<br>
+									<div style="margin-top: 15px;">
+										<strong>Result:</strong><br>
+										<img src="${imageUrl}" style="max-width: 100%; border: 1px solid #ddd; border-radius: 5px;" />
+										<br><br>
+										<a href="${imageUrl}" download="background_removed.png" class="button">Download Result</a>
+									</div>
+								</div>
+							`;
+						}
+						
+					} catch (error) {
+						let errorMessage = error.message;
+						
+						// Handle specific error types
+						if (error.name === 'AbortError') {
+							errorMessage = 'Request timed out. Please try again with a smaller image.';
+						} else if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+							errorMessage = `Connection Failed: Cannot connect to ${API_BASE_URL}`;
+						}
+						
+						resultDiv.innerHTML = `<div class="demo-result error">❌ ${errorMessage}</div>`;
+					}
+				}
 							signal: controller.signal
 						});
 						
@@ -628,6 +744,29 @@ const processedImage = await result.json();</code></pre>
 						`;
 					}
 				}
+				
+				// Alpha matting controls
+				document.getElementById('alphaMatting').addEventListener('change', function() {
+					const options = document.getElementById('alphaMattingOptions');
+					options.style.display = this.checked ? 'block' : 'none';
+				});
+				
+				// Range input updates
+				document.getElementById('foregroundThreshold').addEventListener('input', function() {
+					document.getElementById('foregroundValue').textContent = this.value;
+				});
+				
+				document.getElementById('backgroundThreshold').addEventListener('input', function() {
+					document.getElementById('backgroundValue').textContent = this.value;
+				});
+				
+				document.getElementById('erodeSize').addEventListener('input', function() {
+					document.getElementById('erodeValue').textContent = this.value;
+				});
+				
+				document.getElementById('baseSize').addEventListener('input', function() {
+					document.getElementById('baseSizeValue').textContent = this.value;
+				});
 				
 				// Handle drag and drop
 				document.addEventListener('DOMContentLoaded', function() {

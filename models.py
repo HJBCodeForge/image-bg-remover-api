@@ -22,6 +22,7 @@ class BackgroundRemovalResponse(BaseModel):
     message: str
     processed_image_url: Optional[str] = None
     processing_time: Optional[float] = None
+    model_used: Optional[str] = None
 
 class ErrorResponse(BaseModel):
     success: bool

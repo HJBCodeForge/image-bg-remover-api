@@ -1,11 +1,11 @@
-from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status
+from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status, Form
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import io
 import os
 import logging
-from typing import List
+from typing import List, Optional
 
 from database import get_db, APIKey, generate_api_key, create_tables
 from models import APIKeyCreate, APIKeyResponse, BackgroundRemovalResponse, ErrorResponse
@@ -81,7 +81,7 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint with memory info"""
+    """Health check endpoint with memory info and BackgroundRemover status"""
     try:
         import psutil
         import os
@@ -92,6 +92,14 @@ async def health_check():
         # Get system memory info
         system_memory = psutil.virtual_memory()
         
+        # Get BackgroundRemover health status
+        bg_health = {}
+        try:
+            remover = get_background_remover()
+            bg_health = remover.health_check()
+        except Exception as e:
+            bg_health = {"status": "error", "error": str(e)}
+        
         return {
             "status": "healthy", 
             "service": "background-remover-api",
@@ -99,13 +107,15 @@ async def health_check():
             "memory_percent": round(process.memory_percent(), 2),
             "system_memory_total_mb": round(system_memory.total / 1024 / 1024, 2),
             "system_memory_available_mb": round(system_memory.available / 1024 / 1024, 2),
-            "system_memory_used_percent": system_memory.percent
+            "system_memory_used_percent": system_memory.percent,
+            "background_remover": bg_health
         }
     except Exception as e:
         return {
             "status": "healthy", 
             "service": "background-remover-api",
-            "error": str(e)
+            "error": str(e),
+            "background_remover": {"status": "error", "error": "Not initialized"}
         }
 
 @app.post("/api-keys", response_model=APIKeyResponse)
@@ -180,22 +190,41 @@ async def list_api_keys(db: Session = Depends(get_db)):
 @app.post("/remove-background")
 async def remove_background(
     file: UploadFile = File(...),
-    return_json: bool = False,
-    model_hint: str = None,
-    enhance_quality: bool = True,
+    model_hint: Optional[str] = Form(None),
+    alpha_matting: bool = Form(True),
+    alpha_matting_foreground_threshold: int = Form(240),
+    alpha_matting_background_threshold: int = Form(10),
+    alpha_matting_erode_structure_size: int = Form(10),
+    alpha_matting_base_size: int = Form(1000),
+    return_json: bool = Form(False),
     api_key: APIKey = Depends(validate_api_key)
 ):
     """
-    Remove background from uploaded image with advanced options
+    Remove background from image using BackgroundRemover-main
     
-    - **file**: Image file to process
-    - **return_json**: If true, returns JSON response with base64 image data
-    - **model_hint**: Specific model to use ('human', 'object', 'general') or None for auto-detection
-    - **enhance_quality**: Whether to apply pre/post processing for better quality (default: True)
-    - **Authorization**: Bearer token with your API key
+    Parameters:
+    - file: Image file to process
+    - model_hint: Model preference ('human', 'object', 'general')
+    - alpha_matting: Enable alpha matting for better edges (default: True)
+    - alpha_matting_foreground_threshold: Foreground threshold (default: 240)
+    - alpha_matting_background_threshold: Background threshold (default: 10)
+    - alpha_matting_erode_structure_size: Erosion size (default: 10)
+    - alpha_matting_base_size: Base size for processing (default: 1000)
+    - return_json: Return JSON response with base64 image (default: False)
     """
     try:
-        # Read uploaded file
+        # Validate file type
+        if not file.content_type.startswith('image/'):
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=ErrorResponse(
+                    success=False,
+                    error="Invalid file type",
+                    details="Please upload an image file"
+                ).dict()
+            )
+        
+        # Read image bytes
         image_bytes = await file.read()
         
         # Check file size (limit to 5MB for free tier)
@@ -210,23 +239,16 @@ async def remove_background(
                 ).dict()
             )
         
-        # Validate image
-        if not get_background_remover().validate_image(image_bytes):
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content=ErrorResponse(
-                    success=False,
-                    error="Invalid image file",
-                    details="Please upload a valid image file (JPEG, PNG, etc.)"
-                ).dict()
-            )
-        
-        # Remove background with new parameters
+        # Remove background using BackgroundRemover-main
         remover = get_background_remover()
-        processed_image_bytes, processing_time = remover.remove_background(
+        processed_image_bytes, model_used, processing_time = remover.remove_background(
             image_bytes, 
             model_hint=model_hint,
-            enhance_quality=enhance_quality
+            alpha_matting=alpha_matting,
+            alpha_matting_foreground_threshold=alpha_matting_foreground_threshold,
+            alpha_matting_background_threshold=alpha_matting_background_threshold,
+            alpha_matting_erode_structure_size=alpha_matting_erode_structure_size,
+            alpha_matting_base_size=alpha_matting_base_size
         )
         
         if return_json:
@@ -239,7 +261,8 @@ async def remove_background(
                 success=True,
                 message="Background removed successfully",
                 processed_image_url=f"data:image/png;base64,{processed_image_base64}",
-                processing_time=processing_time
+                processing_time=processing_time,
+                model_used=model_used
             )
         else:
             # Return image file directly
@@ -249,7 +272,7 @@ async def remove_background(
                 headers={
                     "Content-Disposition": f"attachment; filename=processed_{file.filename.replace('.', '_')}.png",
                     "X-Processing-Time": str(processing_time),
-                    "X-API-Key-Name": api_key.name
+                    "X-Model-Used": model_used
                 }
             )
             
@@ -267,44 +290,20 @@ async def remove_background(
             ).dict()
         )
 
-@app.post("/remove-background-simple")
-async def remove_background_simple(
-    file: UploadFile = File(...),
-    api_key: APIKey = Depends(validate_api_key)
-):
-    """
-    Simple background removal endpoint for debugging
-    Uses basic rembg without any enhancements
-    """
+@app.get("/models")
+async def get_models():
+    """Get available background removal models"""
     try:
-        # Read uploaded file
-        image_bytes = await file.read()
-        
-        # Basic validation
-        if len(image_bytes) > 5 * 1024 * 1024:  # 5MB limit
-            raise HTTPException(status_code=400, detail="File too large")
-        
-        # Try basic rembg
-        from rembg import remove
-        from PIL import Image
-        import io
-        
-        # Simple processing
-        input_image = Image.open(io.BytesIO(image_bytes))
-        output_image = remove(input_image)
-        
-        # Convert to PNG
-        output_buffer = io.BytesIO()
-        output_image.save(output_buffer, format='PNG')
-        output_bytes = output_buffer.getvalue()
-        
-        return StreamingResponse(
-            io.BytesIO(output_bytes),
-            media_type="image/png"
-        )
-        
+        remover = get_background_remover()
+        return {
+            "available_models": remover.get_available_models(),
+            "default_model": remover.default_model
+        }
     except Exception as e:
-        import traceback
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error": f"Failed to get models: {str(e)}"}
+        )
         return JSONResponse(
             status_code=500,
             content={
