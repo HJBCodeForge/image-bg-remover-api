@@ -99,6 +99,7 @@ async def root():
         "status": "running",
         "mode": "full" if FULL_FUNCTIONALITY else "limited",
         "port": os.getenv("PORT", "8000"),
+        "last_updated": "2025-07-15T17:33:00Z",  # Force deployment indicator
         "endpoints": {
             "generate_api_key": "POST /api-keys",
             "list_api_keys": "GET /api-keys",
