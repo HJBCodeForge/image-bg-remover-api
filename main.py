@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 import io
 import os
 import logging
-from typing import List, Optional
+from typing import Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
