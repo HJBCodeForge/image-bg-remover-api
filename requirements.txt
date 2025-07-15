@@ -18,4 +18,9 @@ scipy
 pymatting
 filetype
 tqdm
+moviepy
+ffmpeg-python
+hsh
+more_itertools
+waitress
 # Note: torch and torchvision installed separately with CPU-only index in Dockerfile
