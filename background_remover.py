@@ -8,7 +8,7 @@ import io
 import logging
 import time
 import gc
-from typing import Optional, Dict, Any, Tuple, Union
+from typing import Optional, Dict, Any, Tuple, Union, List
 from pathlib import Path
 import requests
 import hashlib
