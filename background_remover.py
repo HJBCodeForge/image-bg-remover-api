@@ -34,13 +34,18 @@ class BackgroundRemover:
     def __init__(self):
         self.device = self._get_device()
         self.model_cache = {}
-        self.model_dir = Path("/app/models")
+        # Use local models directory for development, Docker path for production
+        if os.path.exists("/app/models"):
+            self.model_dir = Path("/app/models")
+        else:
+            self.model_dir = Path("./models")
         self.model_dir.mkdir(exist_ok=True)
         
         # Default to most efficient model
         self.default_model = "u2netp"
         
         logger.info(f"BackgroundRemover initialized with device: {self.device}")
+        logger.info(f"Using models directory: {self.model_dir}")
         
     def _get_device(self) -> str:
         """Get the best available device (CPU optimized for deployment)"""

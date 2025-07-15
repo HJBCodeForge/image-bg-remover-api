@@ -587,15 +587,12 @@ const processedImageBlob = await result.blob();</code></pre>
 					try {
 						const formData = new FormData();
 						formData.append('file', file);
+						formData.append('api_key', apiKey);  // Add API key as form data
 						
 						// Get form values
-						const modelHint = document.getElementById('modelHint').value;
 						const alphaMatting = document.getElementById('alphaMatting').checked;
-						const returnJson = document.getElementById('returnJson').checked;
 						
-						formData.append('model_hint', modelHint);
 						formData.append('alpha_matting', alphaMatting);
-						formData.append('return_json', returnJson);
 						
 						// Alpha matting parameters (only if enabled)
 						if (alphaMatting) {
@@ -611,9 +608,6 @@ const processedImageBlob = await result.blob();</code></pre>
 						
 						const response = await fetch(`${API_BASE_URL}/remove-background`, {
 							method: 'POST',
-							headers: {
-								'Authorization': `Bearer ${apiKey}`
-							},
 							body: formData,
 							signal: controller.signal
 						});
@@ -622,47 +616,26 @@ const processedImageBlob = await result.blob();</code></pre>
 						
 						if (!response.ok) {
 							const errorData = await response.json();
-							throw new Error(errorData.details || errorData.error || `HTTP error! status: ${response.status}`);
+							throw new Error(errorData.detail || errorData.error || `HTTP error! status: ${response.status}`);
 						}
 						
-						if (returnJson) {
-							// Handle JSON response
-							const result = await response.json();
-							
-							resultDiv.innerHTML = `
-								<div class="demo-result success">
-									<strong>✅ Background Removed Successfully!</strong><br>
-									<strong>Model Used:</strong> ${result.model_used}<br>
-									<strong>Processing Time:</strong> ${result.processing_time.toFixed(2)}s<br>
-									<strong>Alpha Matting:</strong> ${alphaMatting ? 'Enabled' : 'Disabled'}<br>
-									<div style="margin-top: 15px;">
-										<strong>Result:</strong><br>
-										<img src="${result.processed_image_url}" style="max-width: 100%; border: 1px solid #ddd; border-radius: 5px;" />
-									</div>
+						// Handle binary response (PNG image)
+						const blob = await response.blob();
+						const imageUrl = URL.createObjectURL(blob);
+						
+						resultDiv.innerHTML = `
+							<div class="demo-result success">
+								<strong>✅ Background Removed Successfully!</strong><br>
+								<strong>Alpha Matting:</strong> ${alphaMatting ? 'Enabled' : 'Disabled'}<br>
+								<div style="margin-top: 15px;">
+									<strong>Result:</strong><br>
+									<img src="${imageUrl}" style="max-width: 100%; border: 1px solid #ddd; border-radius: 5px;" />
 								</div>
-							`;
-						} else {
-							// Handle binary response
-							const blob = await response.blob();
-							const imageUrl = URL.createObjectURL(blob);
-							const processingTime = response.headers.get('X-Processing-Time');
-							const modelUsed = response.headers.get('X-Model-Used');
-							
-							resultDiv.innerHTML = `
-								<div class="demo-result success">
-									<strong>✅ Background Removed Successfully!</strong><br>
-									<strong>Model Used:</strong> ${modelUsed}<br>
-									<strong>Processing Time:</strong> ${processingTime}s<br>
-									<strong>Alpha Matting:</strong> ${alphaMatting ? 'Enabled' : 'Disabled'}<br>
-									<div style="margin-top: 15px;">
-										<strong>Result:</strong><br>
-										<img src="${imageUrl}" style="max-width: 100%; border: 1px solid #ddd; border-radius: 5px;" />
-										<br><br>
-										<a href="${imageUrl}" download="background_removed.png" class="button">Download Result</a>
-									</div>
+								<div style="margin-top: 10px;">
+									<a href="${imageUrl}" download="processed_image.png" class="button small">Download Image</a>
 								</div>
-							`;
-						}
+							</div>
+						`;
 						
 					} catch (error) {
 						let errorMessage = error.message;

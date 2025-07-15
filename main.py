@@ -270,7 +270,8 @@ async def remove_background(
     alpha_matting: bool = Form(False),
     alpha_matting_foreground_threshold: int = Form(270),
     alpha_matting_background_threshold: int = Form(10),
-    alpha_matting_erode_size: int = Form(10),
+    alpha_matting_erode_structure_size: int = Form(10),
+    alpha_matting_base_size: int = Form(1000),
     api_key: str = Form(...)
 ):
     """Remove background from image"""
@@ -282,13 +283,13 @@ async def remove_background(
     
     try:
         from database import get_db
-        from auth import validate_api_key
+        from auth import validate_api_key_string
         db = next(get_db())
         
         logger.info(f"Processing background removal request for file: {file.filename}")
         
         # Validate API key
-        if not validate_api_key(api_key, db):
+        if not validate_api_key_string(api_key, db):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid API key"
@@ -309,19 +310,25 @@ async def remove_background(
         
         # Process image
         logger.info("Starting background removal process...")
-        result_image = remover.remove_background(
+        result_image, metadata = remover.remove_background(
             content,
             alpha_matting=alpha_matting,
             alpha_matting_foreground_threshold=alpha_matting_foreground_threshold,
             alpha_matting_background_threshold=alpha_matting_background_threshold,
-            alpha_matting_erode_size=alpha_matting_erode_size
+            alpha_matting_erode_structure_size=alpha_matting_erode_structure_size,
+            alpha_matting_base_size=alpha_matting_base_size
         )
         
         logger.info("Background removal completed successfully")
         
+        # Convert PIL Image to bytes
+        img_byte_arr = io.BytesIO()
+        result_image.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
+        
         # Return processed image
         return StreamingResponse(
-            io.BytesIO(result_image),
+            img_byte_arr,
             media_type="image/png",
             headers={
                 "Content-Disposition": f"attachment; filename=processed_{file.filename.replace('.jpg', '.png').replace('.jpeg', '.png')}",
