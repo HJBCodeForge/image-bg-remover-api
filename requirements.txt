@@ -24,3 +24,4 @@ hsh
 more_itertools
 waitress
 # Note: torch and torchvision installed separately with CPU-only index in Dockerfile
+# Force deployment timestamp: 2025-07-15T17:35:00Z
