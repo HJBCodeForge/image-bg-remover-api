@@ -2,8 +2,17 @@
 
 ## Deployment Summary
 - **Date**: July 15, 2025
-- **Commit**: `8c4761d` - Fix background removal 422 validation error and implement full functionality
-- **Status**: ✅ Successfully deployed to GitHub
+- **Commit**: `4f9cc98` - Fix timeout issues and improve local development experience
+- **Status**: ✅ Successfully deployed to GitHub with timeout fixes
+
+## Recent Updates (Latest)
+### 6. ✅ Timeout & URL Detection Fix
+**Problem**: Frontend showing "Request timed out" error even with small images
+**Solution**: 
+- Auto-detect API URL (localhost for development, Railway for production)
+- Increased timeout from 2 minutes to 5 minutes
+- Added console logging for debugging
+- Improved error messages with network-specific feedback
 
 ## Issues Resolved
 
