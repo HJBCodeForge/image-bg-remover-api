@@ -169,8 +169,7 @@ async def health_check():
 # API key generation endpoint
 @app.post("/api-keys")
 async def generate_api_key_endpoint(
-    key_name: str = Form(...),
-    db: Session = Depends(get_db) if FULL_FUNCTIONALITY else None
+    key_name: str = Form(...)
 ):
     """Generate a new API key"""
     if not FULL_FUNCTIONALITY:
@@ -194,7 +193,11 @@ async def generate_api_key_endpoint(
             logger.error(f"API key generation failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     
+    # Full functionality with database
     try:
+        from database import get_db
+        db = next(get_db())
+        
         logger.info(f"Generating API key with name: {key_name}")
         
         # Generate API key
@@ -224,7 +227,7 @@ async def generate_api_key_endpoint(
 
 # List API keys endpoint
 @app.get("/api-keys")
-async def list_api_keys(db: Session = Depends(get_db) if FULL_FUNCTIONALITY else None):
+async def list_api_keys():
     """List all API keys"""
     if not FULL_FUNCTIONALITY:
         return {
@@ -233,6 +236,9 @@ async def list_api_keys(db: Session = Depends(get_db) if FULL_FUNCTIONALITY else
         }
     
     try:
+        from database import get_db
+        db = next(get_db())
+        
         logger.info("Listing API keys")
         
         # Get all API keys
@@ -261,8 +267,7 @@ async def remove_background(
     alpha_matting_foreground_threshold: int = Form(270),
     alpha_matting_background_threshold: int = Form(10),
     alpha_matting_erode_size: int = Form(10),
-    api_key: str = Form(...),
-    db: Session = Depends(get_db) if FULL_FUNCTIONALITY else None
+    api_key: str = Form(...)
 ):
     """Remove background from image"""
     if not FULL_FUNCTIONALITY:
@@ -272,6 +277,10 @@ async def remove_background(
         )
     
     try:
+        from database import get_db
+        from auth import validate_api_key
+        db = next(get_db())
+        
         logger.info(f"Processing background removal request for file: {file.filename}")
         
         # Validate API key
