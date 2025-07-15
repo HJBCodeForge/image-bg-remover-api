@@ -505,15 +505,15 @@ const processedImageBlob = await result.blob();</code></pre>
 						const data = await response.json();
 						
 						// Auto-fill the API key input
-						document.getElementById('apiKeyInput').value = data.api_key;
+						document.getElementById('apiKeyInput').value = data.key;
 						
 						resultDiv.innerHTML = `
 							<div class="demo-result success">
 								<strong>✅ API Key Generated Successfully!</strong>
 								<div class="api-key-display">
-									<strong>Key:</strong> ${data.api_key}<br>
+									<strong>Key:</strong> ${data.key}<br>
 									<strong>Name:</strong> ${data.name}<br>
-									<strong>Status:</strong> ${data.status}<br>
+									<strong>Status:</strong> ${data.is_active ? 'active' : 'inactive'}<br>
 									<strong>Created:</strong> ${data.created_at}
 								</div>
 								<p><small>💡 Your API key has been automatically filled in the form below</small></p>
