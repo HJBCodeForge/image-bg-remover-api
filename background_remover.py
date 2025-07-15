@@ -22,8 +22,7 @@ import torchvision.transforms as transforms
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backgroundremover-main'))
 
-from backgroundremover.bg import remove
-from backgroundremover.utilities import get_models
+from backgroundremover.bg import remove, get_model
 
 logger = logging.getLogger(__name__)
 
