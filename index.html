@@ -294,25 +294,27 @@
 								<section>
 									<h3>Code Example</h3>
 									<pre><code>// Generate API Key
+const formData = new FormData();
+formData.append('key_name', 'My App');
+
 const response = await fetch('https://web-production-faaf.up.railway.app/api-keys', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ name: 'My App' })
+  body: formData
 });
 const apiKey = await response.json();
 
 // Remove Background (with enhanced quality)
-const formData = new FormData();
-formData.append('file', imageFile);
-formData.append('enhance_quality', 'true');  // Optional: improved processing
+const formData2 = new FormData();
+formData2.append('file', imageFile);
+formData2.append('api_key', apiKey.api_key);
+formData2.append('alpha_matting', 'true');  // Optional: improved processing
 
-const result = await fetch('https://web-production-faaf.up.railway.app/remove-background?return_json=true', {
+const result = await fetch('https://web-production-faaf.up.railway.app/remove-background', {
   method: 'POST',
-  headers: { 'Authorization': `Bearer ${apiKey.key}` },
-  body: formData
+  body: formData2
 });
 
-const processedImage = await result.json();</code></pre>
+const processedImageBlob = await result.blob();</code></pre>
 								</section>
 
 							<!-- Key Features -->
@@ -484,12 +486,13 @@ const processedImage = await result.json();</code></pre>
 					}
 					
 					try {
+						// Use form data instead of JSON as the API expects form data
+						const formData = new FormData();
+						formData.append('key_name', keyName);
+						
 						const response = await fetch(`${API_BASE_URL}/api-keys`, {
 							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							body: JSON.stringify({ name: keyName })
+							body: formData
 						});
 						
 						if (!response.ok) {
@@ -499,15 +502,16 @@ const processedImage = await result.json();</code></pre>
 						const data = await response.json();
 						
 						// Auto-fill the API key input
-						document.getElementById('apiKeyInput').value = data.key;
+						document.getElementById('apiKeyInput').value = data.api_key;
 						
 						resultDiv.innerHTML = `
 							<div class="demo-result success">
 								<strong>✅ API Key Generated Successfully!</strong>
 								<div class="api-key-display">
-									<strong>Key:</strong> ${data.key}<br>
+									<strong>Key:</strong> ${data.api_key}<br>
 									<strong>Name:</strong> ${data.name}<br>
-									<strong>ID:</strong> ${data.id}
+									<strong>Status:</strong> ${data.status}<br>
+									<strong>Created:</strong> ${data.created_at}
 								</div>
 								<p><small>💡 Your API key has been automatically filled in the form below</small></p>
 							</div>
