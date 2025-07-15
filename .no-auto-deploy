@@ -1,0 +1,6 @@
+# DEPLOYMENT DISABLED FOR TESTING
+# This file prevents automatic deployment while testing Docker optimizations
+# Remove this file when ready to deploy
+
+DEPLOYMENT_DISABLED=true
+AUTO_DEPLOY=false

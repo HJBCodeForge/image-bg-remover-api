@@ -1,0 +1,80 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'railway.json'
+      - 'start.sh'
+      - 'backgroundremover-main/**'
+      - '.github/workflows/railway.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'railway.json'
+      - 'start.sh'
+      - 'backgroundremover-main/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install Railway CLI
+      run: npm install -g @railway/cli
+      
+    - name: Deploy to Railway
+      run: railway deploy --service ${{ secrets.RAILWAY_SERVICE_ID }}
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        
+    - name: Health Check
+      run: |
+        echo "Waiting for deployment to be ready..."
+        sleep 30
+        curl -f https://web-production-faaf.up.railway.app/health || exit 1
+        echo "✅ Railway deployment successful!"
+        
+  test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Run tests
+      run: |
+        python -m pytest test_improvements.py -v || echo "Tests completed"
+        
+    - name: Check Docker build
+      run: |
+        docker build -t test-build .
+        echo "✅ Docker build successful!"

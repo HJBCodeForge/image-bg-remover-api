@@ -9,6 +9,7 @@ env
 venv
 .git
 .gitignore
+.github
 README.md
 .pytest_cache
 .coverage
@@ -33,6 +34,7 @@ MEMORY_*.md
 PYTHON_*.md
 QUICK_*.md
 RAILWAY_*.md
+GITHUB_SECRETS_SETUP.md
 assets/
 images/
 uploads/

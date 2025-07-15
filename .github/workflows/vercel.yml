@@ -1,0 +1,68 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'index.html'
+      - 'assets/**'
+      - 'vercel.json'
+      - '.github/workflows/vercel.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'index.html'
+      - 'assets/**'
+      - 'vercel.json'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install Vercel CLI
+      run: npm install -g vercel@latest
+      
+    - name: Deploy to Vercel
+      run: vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        
+    - name: Health Check
+      run: |
+        echo "Waiting for deployment to be ready..."
+        sleep 15
+        curl -f https://bg-remover-frontend-tau.vercel.app/ || exit 1
+        echo "✅ Vercel deployment successful!"
+        
+  preview:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install Vercel CLI
+      run: npm install -g vercel@latest
+      
+    - name: Deploy Preview
+      run: vercel --token ${{ secrets.VERCEL_TOKEN }}
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
