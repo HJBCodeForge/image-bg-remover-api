@@ -269,8 +269,11 @@ async def list_api_keys():
         logger.error(f"Failed to list API keys: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to list API keys: {str(e)}")
 
-# Mount static files for assets
-app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+# Mount static files for assets (only if directory exists)
+if os.path.exists("assets"):
+    app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+else:
+    logger.warning("Assets directory not found - static file serving disabled")
 
 # Favicon handler
 @app.get("/favicon.ico")

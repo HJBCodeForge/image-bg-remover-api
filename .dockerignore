@@ -35,7 +35,6 @@ PYTHON_*.md
 QUICK_*.md
 RAILWAY_*.md
 GITHUB_SECRETS_SETUP.md
-assets/
 images/
 uploads/
 bg_remover.db
