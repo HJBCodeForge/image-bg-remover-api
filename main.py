@@ -7,6 +7,10 @@ import io
 import os
 import logging
 from typing import Optional
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -379,12 +383,12 @@ async def send_contact_message(
         from email.mime.multipart import MIMEMultipart
         import os
         
-        # Email configuration (you'll need to set these environment variables)
+        # Email configuration
         smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
         smtp_port = int(os.getenv("SMTP_PORT", "587"))
         sender_email = os.getenv("SENDER_EMAIL", "noreply@hjbcodeforge.com")
         sender_password = os.getenv("SENDER_PASSWORD", "")
-        recipient_email = "support@hjbcodeforge.com"
+        recipient_email = os.getenv("RECIPIENT_EMAIL", "support@hjbcodeforge.com")
         
         # Create message
         msg = MIMEMultipart()
@@ -408,26 +412,66 @@ Sent from Background Remover API contact form
         
         msg.attach(MIMEText(body, 'plain'))
         
-        # For development/testing, we'll just log the message instead of sending
-        # In production, you'd uncomment the SMTP code below
+        # Log the message for debugging
         logger.info(f"Contact form submission from {name} ({email}): {message}")
         
-        # SMTP sending (commented out for development)
-        # server = smtplib.SMTP(smtp_server, smtp_port)
-        # server.starttls()
-        # server.login(sender_email, sender_password)
-        # server.send_message(msg)
-        # server.quit()
+        # Check if email credentials are configured
+        if not sender_password:
+            logger.warning("Email credentials not configured - email functionality disabled")
+            return JSONResponse(
+                content={
+                    "success": True,
+                    "message": "Message received! We'll get back to you soon. (Email forwarding not configured)"
+                },
+                headers={
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
         
-        return JSONResponse(
-            content={
-                "success": True,
-                "message": "Message sent successfully! We'll get back to you soon."
-            },
-            headers={
-                "Access-Control-Allow-Origin": "*"
-            }
-        )
+        # Send email via SMTP
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"Email sent successfully to {recipient_email}")
+            
+            return JSONResponse(
+                content={
+                    "success": True,
+                    "message": "Message sent successfully! We'll get back to you as soon as possible."
+                },
+                headers={
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
+            
+        except smtplib.SMTPAuthenticationError:
+            logger.error("SMTP authentication failed - check email credentials")
+            return JSONResponse(
+                content={
+                    "success": False,
+                    "message": "Email service temporarily unavailable. Please email us directly at support@hjbcodeforge.com"
+                },
+                status_code=503,
+                headers={
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
+        except smtplib.SMTPException as smtp_error:
+            logger.error(f"SMTP error: {smtp_error}")
+            return JSONResponse(
+                content={
+                    "success": False,
+                    "message": "Failed to send message. Please try again or email us directly at support@hjbcodeforge.com"
+                },
+                status_code=500,
+                headers={
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
         
     except Exception as e:
         logger.error(f"Contact form error: {e}")
