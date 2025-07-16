@@ -80,7 +80,7 @@ async function generateApiKey() {
 		
 		resultDiv.innerHTML = `
 			<div class="demo-result success">
-				<strong>✅ API Key Generated Successfully!</strong>
+				<strong>✓ API Key Generated Successfully!</strong>
 				<div class="api-key-display">
 					<strong>Key:</strong> ${data.key}<br>
 					<strong>Name:</strong> ${data.name}<br>
@@ -107,7 +107,7 @@ async function generateApiKey() {
 			`;
 		}
 		
-		resultDiv.innerHTML = `<div class="demo-result error">❌ ${errorMessage}</div>`;
+		resultDiv.innerHTML = `<div class="demo-result error">✖ ${errorMessage}</div>`;
 	}
 }
 
@@ -137,13 +137,13 @@ async function removeBackground() {
 					   supportedExtensions.some(ext => fileName.endsWith(ext));
 	
 	if (!isValidType) {
-		resultDiv.innerHTML = '<div class="demo-result error">❌ Unsupported file format. Please upload a JPEG, PNG, WebP, BMP, or TIFF image.</div>';
+		resultDiv.innerHTML = '<div class="demo-result error">✖ Unsupported file format. Please upload a JPEG, PNG, WebP, BMP, or TIFF image.</div>';
 		return;
 	}
 	
 	// Check file size (limit to 5MB for free tier)
 	if (file.size > 5 * 1024 * 1024) {
-		resultDiv.innerHTML = '<div class="demo-result error">❌ File too large. Please upload an image smaller than 5MB.</div>';
+		resultDiv.innerHTML = '<div class="demo-result error">✖ File too large. Please upload an image smaller than 5MB.</div>';
 		return;
 	}
 	
@@ -201,7 +201,7 @@ async function removeBackground() {
 		
 		resultDiv.innerHTML = `
 			<div class="demo-result success">
-				<strong>✅ Background Removed Successfully!</strong><br>
+				<strong>✓ Background Removed Successfully!</strong><br>
 				<strong>Alpha Matting:</strong> ${alphaMatting ? 'Enabled' : 'Disabled'}<br>
 				<div style="margin-top: 15px;">
 					<strong>Result:</strong><br>
@@ -224,7 +224,75 @@ async function removeBackground() {
 			errorMessage = 'Network error. Please check your internet connection and try again.';
 		}
 		
-		resultDiv.innerHTML = `<div class="demo-result error">❌ ${errorMessage}</div>`;
+		resultDiv.innerHTML = `<div class="demo-result error">✖ ${errorMessage}</div>`;
+	}
+}
+
+// Contact Form Functionality
+function initializeContactForm() {
+	const contactForm = document.getElementById('contactForm');
+	if (contactForm) {
+		contactForm.addEventListener('submit', handleContactSubmit);
+	}
+}
+
+async function handleContactSubmit(e) {
+	e.preventDefault();
+	
+	const formData = new FormData(e.target);
+	const name = formData.get('name');
+	const email = formData.get('email');
+	const message = formData.get('message');
+	const resultDiv = document.getElementById('contactResult');
+	
+	// Basic validation
+	if (!name.trim() || !email.trim() || !message.trim()) {
+		resultDiv.innerHTML = '<div class="demo-result error">Please fill in all fields</div>';
+		return;
+	}
+	
+	// Email validation
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	if (!emailRegex.test(email)) {
+		resultDiv.innerHTML = '<div class="demo-result error">Please enter a valid email address</div>';
+		return;
+	}
+	
+	// Show loading state
+	resultDiv.innerHTML = '<div class="demo-result">📧 Sending message...</div>';
+	
+	try {
+		// Send to backend API
+		const response = await fetch(`${API_BASE_URL}/contact`, {
+			method: 'POST',
+			body: formData
+		});
+		
+		const result = await response.json();
+		
+		if (result.success) {
+			resultDiv.innerHTML = `
+				<div class="demo-result success">
+					<strong>✓ Message sent successfully!</strong><br>
+					We'll get back to you as soon as possible.
+				</div>
+			`;
+			
+			// Clear form
+			e.target.reset();
+		} else {
+			throw new Error(result.message || 'Failed to send message');
+		}
+		
+	} catch (error) {
+		console.error('Contact form error:', error);
+		resultDiv.innerHTML = `
+			<div class="demo-result error">
+				<strong>✖ Failed to send message</strong><br>
+				Please try again or email us directly at:<br>
+				<a href="mailto:support@hjbcodeforge.com" style="color: #9bf1ff;">support@hjbcodeforge.com</a>
+			</div>
+		`;
 	}
 }
 
@@ -258,13 +326,16 @@ function initializeDemo() {
 	
 	// Handle drag and drop functionality
 	initializeDragAndDrop();
+	
+	// Initialize contact form
+	initializeContactForm();
 }
 
 // Drag and Drop Functionality
 function initializeDragAndDrop() {
 	const imageFile = document.getElementById('imageFile');
 	if (imageFile) {
-		const dropZone = imageFile.parentElement;
+		const dropZone = imageFile.parentElement; // This is now the .file-input-container
 		
 		['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
 			dropZone.addEventListener(eventName, preventDefaults, false);
@@ -284,11 +355,11 @@ function initializeDragAndDrop() {
 		});
 		
 		function highlight(e) {
-			dropZone.style.background = 'rgba(255, 255, 255, 0.1)';
+			dropZone.classList.add('drag-over');
 		}
 		
 		function unhighlight(e) {
-			dropZone.style.background = '';
+			dropZone.classList.remove('drag-over');
 		}
 		
 		dropZone.addEventListener('drop', handleDrop, false);
@@ -309,7 +380,7 @@ function initializeDragAndDrop() {
 				
 				if (!isValidType) {
 					document.getElementById('imageResult').innerHTML = 
-						'<div class="demo-result error">❌ Unsupported file format. Please upload a JPEG, PNG, WebP, BMP, or TIFF image.</div>';
+						'<div class="demo-result error">✖ Unsupported file format. Please upload a JPEG, PNG, WebP, BMP, or TIFF image.</div>';
 					return;
 				}
 				
@@ -323,6 +394,49 @@ function initializeDragAndDrop() {
 			}
 		}
 	}
+}
+
+// Reset Alpha Matting Options to Default Values
+function resetAlphaMattingOptions() {
+	// Define default values
+	const defaultValues = {
+		foregroundThreshold: 240,
+		backgroundThreshold: 10,
+		erodeSize: 10,
+		baseSize: 1000
+	};
+	
+	// Reset all sliders to default values
+	document.getElementById('foregroundThreshold').value = defaultValues.foregroundThreshold;
+	document.getElementById('backgroundThreshold').value = defaultValues.backgroundThreshold;
+	document.getElementById('erodeSize').value = defaultValues.erodeSize;
+	document.getElementById('baseSize').value = defaultValues.baseSize;
+	
+	// Update the display values
+	document.getElementById('foregroundValue').textContent = defaultValues.foregroundThreshold;
+	document.getElementById('backgroundValue').textContent = defaultValues.backgroundThreshold;
+	document.getElementById('erodeValue').textContent = defaultValues.erodeSize;
+	document.getElementById('baseSizeValue').textContent = defaultValues.baseSize;
+	
+	// Reset the checkbox to checked (default state)
+	document.getElementById('alphaMatting').checked = true;
+	
+	// Show confirmation
+	const confirmationDiv = document.createElement('div');
+	confirmationDiv.className = 'demo-result success';
+	confirmationDiv.style.margin = '10px 0';
+	confirmationDiv.innerHTML = '✓ Alpha Matting options reset to default values';
+	
+	// Insert the confirmation message after the reset button
+	const resetButton = document.getElementById('resetButton');
+	resetButton.parentNode.insertBefore(confirmationDiv, resetButton.nextSibling);
+	
+	// Remove the confirmation message after 3 seconds
+	setTimeout(() => {
+		if (confirmationDiv.parentNode) {
+			confirmationDiv.parentNode.removeChild(confirmationDiv);
+		}
+	}, 3000);
 }
 
 // Initialize when DOM is loaded

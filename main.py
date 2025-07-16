@@ -360,6 +360,85 @@ async def remove_background(
             detail=f"Background removal failed: {str(e)}"
         )
 
+# Contact form endpoint
+@app.post("/contact")
+async def send_contact_message(
+    name: str = Form(...),
+    email: str = Form(...),
+    message: str = Form(...)
+):
+    """
+    Send contact form message via email
+    """
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        import os
+        
+        # Email configuration (you'll need to set these environment variables)
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        sender_email = os.getenv("SENDER_EMAIL", "noreply@hjbcodeforge.com")
+        sender_password = os.getenv("SENDER_PASSWORD", "")
+        recipient_email = "support@hjbcodeforge.com"
+        
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = f"Contact Form Message from {name}"
+        
+        # Email body
+        body = f"""
+New contact form submission:
+
+Name: {name}
+Email: {email}
+
+Message:
+{message}
+
+---
+Sent from Background Remover API contact form
+        """
+        
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # For development/testing, we'll just log the message instead of sending
+        # In production, you'd uncomment the SMTP code below
+        logger.info(f"Contact form submission from {name} ({email}): {message}")
+        
+        # SMTP sending (commented out for development)
+        # server = smtplib.SMTP(smtp_server, smtp_port)
+        # server.starttls()
+        # server.login(sender_email, sender_password)
+        # server.send_message(msg)
+        # server.quit()
+        
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": "Message sent successfully! We'll get back to you soon."
+            },
+            headers={
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Contact form error: {e}")
+        return JSONResponse(
+            content={
+                "success": False,
+                "message": "Failed to send message. Please try again or email us directly."
+            },
+            status_code=500,
+            headers={
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))

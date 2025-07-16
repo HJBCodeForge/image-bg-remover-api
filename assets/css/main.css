@@ -3874,14 +3874,27 @@ input, select, textarea {
 
 	#intro {
 		background-attachment: fixed;
-		background-image: url("images/intro.svg");
-		background-position: top right;
-		background-repeat: no-repeat;
-		background-size: 100% 100%;
+		background-image: url("images/backgroundimghalfremoved-min.png"), url("images/intro.svg");
+		background-position: center center, top right;
+		background-repeat: no-repeat, no-repeat;
+		background-size: contain, 100% 100%;
 	}
+
+		#intro .inner {
+			border-radius: 10px;
+			padding: 2rem;
+			backdrop-filter: blur(2px);
+		}
+
+		#intro h1 {
+			text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+			color: #ffffff;
+		}
 
 		#intro p {
 			font-size: 1.25em;
+			text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+			color: #ffffff;
 		}
 
 			@media screen and (max-width: 980px) {

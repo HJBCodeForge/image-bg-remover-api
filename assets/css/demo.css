@@ -55,15 +55,15 @@
 }
 
 .demo-result.success {
-	background: rgba(76, 175, 80, 0.1);
-	color: #4CAF50;
-	border: 1px solid rgba(76, 175, 80, 0.3);
+	background: rgba(255, 255, 255, 0.15);
+	color: #b8b8b8;
+	border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .demo-result.error {
-	background: rgba(244, 67, 54, 0.1);
-	color: #f44336;
-	border: 1px solid rgba(244, 67, 54, 0.3);
+	background: rgba(255, 255, 255, 0.15);
+	color: #9d342d;
+	border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .image-preview {
@@ -179,4 +179,48 @@
 .tooltip-container:hover .tooltip-text {
 	visibility: visible;
 	opacity: 1;
+}
+
+/* Fix for Primary Button Hover Effects */
+.button.primary:hover {
+	background-color: #f0f0f0 !important;
+	border-color: #ddd !important;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.button.primary:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Drag and Drop Expansion Effects */
+.file-input-container {
+	transition: all 0.3s ease;
+	position: relative;
+}
+
+.file-input-container.drag-over {
+	transform: scale(1.02);
+	background: rgba(155, 241, 255, 0.1) !important;
+	border: 2px dashed rgba(155, 241, 255, 0.6) !important;
+	border-radius: 12px;
+	padding: 8px;
+}
+
+.file-input-container.drag-over::before {
+	content: "📁 Drop your image here";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgba(155, 241, 255, 0.9);
+	color: #312450;
+	padding: 8px 16px;
+	border-radius: 6px;
+	font-size: 0.9em;
+	font-weight: bold;
+	pointer-events: none;
+	z-index: 10;
+	white-space: nowrap;
 }
