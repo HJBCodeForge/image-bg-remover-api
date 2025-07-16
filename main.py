@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status, Form, Request
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 import io
 import os
@@ -92,7 +93,12 @@ async def startup_event():
 
 @app.get("/")
 async def root():
-    """Root endpoint with API information"""
+    """Serve the main HTML interface"""
+    return FileResponse("index.html")
+
+@app.get("/api")
+async def api_info():
+    """API information endpoint"""
     return {
         "message": "Background Remover API",
         "version": "1.0.0",
@@ -262,6 +268,15 @@ async def list_api_keys():
     except Exception as e:
         logger.error(f"Failed to list API keys: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to list API keys: {str(e)}")
+
+# Mount static files for assets
+app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+
+# Favicon handler
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve favicon or return 404"""
+    return FileResponse("assets/favicon.ico") if os.path.exists("assets/favicon.ico") else HTTPException(status_code=404)
 
 # Background removal endpoint
 @app.post("/remove-background")
