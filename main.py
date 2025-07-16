@@ -486,6 +486,27 @@ Sent from Background Remover API contact form
             }
         )
 
+# Email configuration test endpoint
+@app.get("/email-config-test")
+async def email_config_test():
+    """Test endpoint to check email configuration"""
+    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    sender_email = os.getenv("SENDER_EMAIL", "noreply@hjbcodeforge.com")
+    sender_password = os.getenv("SENDER_PASSWORD", "")
+    recipient_email = os.getenv("RECIPIENT_EMAIL", "support@hjbcodeforge.com")
+    
+    config_status = {
+        "smtp_server": smtp_server,
+        "smtp_port": smtp_port,
+        "sender_email": sender_email,
+        "sender_password_configured": bool(sender_password),
+        "recipient_email": recipient_email,
+        "email_functionality": "enabled" if sender_password else "disabled - no password configured"
+    }
+    
+    return JSONResponse(content=config_status)
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
