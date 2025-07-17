@@ -48,7 +48,7 @@
 						<div class="inner">
 							<div class="demo-container">
 								<div class="demo-section">
-									<h3>🔑 Generate API Key</h3>
+									<h3><i class="fas fa-key"></i> Generate API Key</h3>
 									<div class="form-group">
 										<label for="keyName">Label your API Key (e.g., "My Photo App", "Website", "Testing"):</label>
 										<input type="text" id="keyName" placeholder="Enter a descriptive name to identify this key later" />
@@ -61,7 +61,7 @@
 								</div>
 								
 								<div class="demo-section">
-									<h3>🤖 Model Selection</h3>
+									<h3><i class="fas fa-robot"></i> Model Selection</h3>
 									<div class="form-group">
 										<label for="modelHint">Choose Model:</label>
 										<select id="modelHint">
@@ -73,13 +73,13 @@
 								</div>
 								
 								<div class="demo-section">
-									<h3>🎨 Alpha Matting Options</h3>
+									<h3><i class="fas fa-paint-brush"></i> Alpha Matting Options</h3>
 									<div class="form-group">
 										<label>
 											<input type="checkbox" id="alphaMatting" checked />
 											Enable Alpha Matting (Better edge quality)
 											<div class="tooltip-container">
-												<span class="tooltip-icon">i</span>
+												<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
 												<span class="tooltip-text">
 													Alpha matting creates smoother, more natural edges by analyzing the transparency of pixels along the border. This produces higher quality results but takes slightly longer to process.
 												</span>
@@ -96,7 +96,7 @@
 											<label for="foregroundThreshold">
 												Foreground Threshold (0-255):
 												<div class="tooltip-container">
-													<span class="tooltip-icon">i</span>
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
 													<span class="tooltip-text">
 														Controls how aggressively the algorithm identifies foreground pixels. Higher values (240) are more selective, lower values (180) include more borderline pixels as foreground.
 													</span>
@@ -109,7 +109,7 @@
 											<label for="backgroundThreshold">
 												Background Threshold (0-255):
 												<div class="tooltip-container">
-													<span class="tooltip-icon">i</span>
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
 													<span class="tooltip-text">
 														Controls how aggressively the algorithm identifies background pixels. Lower values (10) are more selective, higher values (50) include more borderline pixels as background.
 													</span>
@@ -122,7 +122,7 @@
 											<label for="erodeSize">
 												Erosion Size (1-20):
 												<div class="tooltip-container">
-													<span class="tooltip-icon">i</span>
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
 													<span class="tooltip-text">
 														Controls edge smoothing. Higher values (15) create smoother edges but may remove fine details. Lower values (5) preserve more detail but may leave rough edges.
 													</span>
@@ -135,7 +135,7 @@
 											<label for="baseSize">
 												Base Size (500-2000):
 												<div class="tooltip-container">
-													<span class="tooltip-icon">i</span>
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
 													<span class="tooltip-text">
 														Controls processing resolution. Higher values (1500) give better quality but slower processing. Lower values (800) process faster but may reduce edge quality.
 													</span>
@@ -148,7 +148,7 @@
 								</div>
 								
 								<div class="demo-section">
-									<h3>📁 Remove Background</h3>
+									<h3><i class="fas fa-image"></i> Remove Background</h3>
 									<div class="form-group">
 										<label for="apiKeyInput">Your API Key:</label>
 										<input type="text" id="apiKeyInput" placeholder="Enter your API key" />
@@ -179,7 +179,7 @@
 
 							<!-- Overview -->
 								<section>
-									<h3>📋 Overview</h3>
+									<h3><i class="fas fa-clipboard-list"></i> Overview</h3>
 									<p>The Background Remover API provides AI-powered background removal capabilities for images. This RESTful API allows you to remove backgrounds from images with high precision and speed, designed for integration into web applications, mobile apps, and automated workflows.</p>
 									<div class="row">
 										<div class="col-6 col-12-medium">
@@ -203,7 +203,7 @@
 
 							<!-- Authentication -->
 								<section>
-									<h3>🔐 Authentication</h3>
+									<h3><i class="fas fa-lock"></i> Authentication</h3>
 									<p>The API uses API key authentication. You must include your API key in requests to access protected endpoints.</p>
 									
 									<h4>Authentication Methods</h4>
@@ -222,7 +222,7 @@ Authorization: Bearer bgr_your_api_key_here</code></pre>
 
 							<!-- Quick Start -->
 								<section>
-									<h3>🚀 Quick Start Guide</h3>
+									<h3><i class="fas fa-rocket"></i> Quick Start Guide</h3>
 									<div class="features">
 										<section>
 											<span class="icon solid major fa-key"></span>
@@ -230,12 +230,12 @@ Authorization: Bearer bgr_your_api_key_here</code></pre>
 											<p>Create a new API key using the <code>POST /api-keys</code> endpoint with a descriptive label to identify your application or project.</p>
 										</section>
 										<section>
-											<span class="icon solid major fa-upload"></span>
+											<span class="icon solid major fa-cloud-upload-alt"></span>
 											<h4>2. Send Image</h4>
 											<p>Send your image file to the <code>POST /remove-background</code> endpoint with your API key and optional parameters.</p>
 										</section>
 										<section>
-											<span class="icon solid major fa-download"></span>
+											<span class="icon solid major fa-magic"></span>
 											<h4>3. Get Result</h4>
 											<p>Receive the processed image with transparent background in PNG format, ready for use in your application.</p>
 										</section>
@@ -244,9 +244,9 @@ Authorization: Bearer bgr_your_api_key_here</code></pre>
 
 							<!-- API Endpoints -->
 								<section>
-									<h3>📡 API Endpoints</h3>
+									<h3><i class="fas fa-satellite-dish"></i> API Endpoints</h3>
 									
-									<h4>🔑 Generate API Key</h4>
+									<h4><i class="fas fa-key"></i> Generate API Key</h4>
 									<p><code><strong>POST</strong> /api-keys</code></p>
 									<p>Generate a new API key for authentication.</p>
 									
@@ -266,7 +266,7 @@ Authorization: Bearer bgr_your_api_key_here</code></pre>
   "is_active": true
 }</code></pre>
 
-									<h4>🖼️ Remove Background</h4>
+									<h4><i class="fas fa-image"></i> Remove Background</h4>
 									<p><code><strong>POST</strong> /remove-background</code></p>
 									<p>Remove background from an image using AI processing.</p>
 									
@@ -283,7 +283,7 @@ Authorization: Bearer bgr_your_api_key_here</code></pre>
 									
 									<p><strong>Response:</strong> Binary PNG image data with transparent background</p>
 									
-									<h4>📋 List API Keys</h4>
+									<h4><i class="fas fa-clipboard-list"></i> List API Keys</h4>
 									<p><code><strong>GET</strong> /api-keys</code></p>
 									<p>List all API keys for management purposes.</p>
 									
@@ -299,7 +299,7 @@ Authorization: Bearer bgr_your_api_key_here</code></pre>
   ]
 }</code></pre>
 
-									<h4>❤️ Health Check</h4>
+									<h4><i class="fas fa-heartbeat"></i> Health Check</h4>
 									<p><code><strong>GET</strong> /health</code></p>
 									<p>Check API status and system health.</p>
 									
@@ -314,7 +314,7 @@ Authorization: Bearer bgr_your_api_key_here</code></pre>
   }
 }</code></pre>
 
-									<h4>ℹ️ API Information</h4>
+									<h4><i class="fas fa-info-circle"></i> API Information</h4>
 									<p><code><strong>GET</strong> /</code></p>
 									<p>Get API version and endpoint information.</p>
 									
@@ -334,7 +334,7 @@ Authorization: Bearer bgr_your_api_key_here</code></pre>
 
 							<!-- Code Examples -->
 								<section>
-									<h3>💻 Code Examples</h3>
+									<h3><i class="fas fa-code"></i> Code Examples</h3>
 									
 									<h4>JavaScript/Node.js</h4>
 									<pre><code>// Generate API Key
@@ -415,7 +415,7 @@ curl -X POST https://web-production-faaf.up.railway.app/remove-background \
 
 							<!-- Error Handling -->
 								<section>
-									<h3>⚠️ Error Handling</h3>
+									<h3><i class="fas fa-exclamation-triangle"></i> Error Handling</h3>
 									<p>The API returns standard HTTP status codes and JSON error responses:</p>
 									
 									<h4>Common HTTP Status Codes</h4>
@@ -447,7 +447,7 @@ curl -X POST https://web-production-faaf.up.railway.app/remove-background \
 
 							<!-- Alpha Matting -->
 								<section>
-									<h3>🎨 Alpha Matting Options</h3>
+									<h3><i class="fas fa-paint-brush"></i> Alpha Matting Options</h3>
 									<p>Alpha matting provides superior edge quality by analyzing pixel transparency. Enable it for professional results:</p>
 									
 									<div class="row">
@@ -468,7 +468,7 @@ curl -X POST https://web-production-faaf.up.railway.app/remove-background \
 
 							<!-- Best Practices -->
 								<section>
-									<h3>✅ Best Practices</h3>
+									<h3><i class="fas fa-check-circle"></i> Best Practices</h3>
 									<div class="features">
 										<section>
 											<span class="icon solid major fa-shield-alt"></span>
@@ -480,7 +480,7 @@ curl -X POST https://web-production-faaf.up.railway.app/remove-background \
 											</ul>
 										</section>
 										<section>
-											<span class="icon solid major fa-tachometer-alt"></span>
+											<span class="icon solid major fa-rocket"></span>
 											<h4>Performance</h4>
 											<ul>
 												<li>Optimize image size before uploading</li>
@@ -489,7 +489,7 @@ curl -X POST https://web-production-faaf.up.railway.app/remove-background \
 											</ul>
 										</section>
 										<section>
-											<span class="icon solid major fa-bug"></span>
+											<span class="icon solid major fa-exclamation-triangle"></span>
 											<h4>Error Handling</h4>
 											<ul>
 												<li>Always handle HTTP errors gracefully</li>
@@ -502,7 +502,7 @@ curl -X POST https://web-production-faaf.up.railway.app/remove-background \
 
 							<!-- Support -->
 								<section>
-									<h3>🆘 Support & Resources</h3>
+									<h3><i class="fas fa-life-ring"></i> Support & Resources</h3>
 									<div class="row">
 										<div class="col-6 col-12-medium">
 											<h4>Get Help</h4>
@@ -568,10 +568,10 @@ curl -X POST https://web-production-faaf.up.railway.app/remove-background \
 											<h3>Social</h3>
 											<ul class="icons">
 												<li><a href="https://x.com/HJBCodeForge" class="icon brands fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
-												<li><a href="https://www.facebook.com/profile.php?id=61573054515636" class="icon brands fa-facebook-f" target="_blank"><span class="label">Facebook</span></a></li>
+												<li><a href="https://www.facebook.com/profile.php?id=61573054515636" class="icon brands fa-facebook" target="_blank"><span class="label">Facebook</span></a></li>
 												<li><a href="https://github.com/HJBCodeForge" class="icon brands fa-github" target="_blank"><span class="label">GitHub</span></a></li>
 												<li><a href="https://www.instagram.com/hjbcodeforge/" class="icon brands fa-instagram" target="_blank"><span class="label">Instagram</span></a></li>
-												<li><a href="https://www.linkedin.com/in/henning-botha-694632375/" class="icon brands fa-linkedin-in" target="_blank"><span class="label">LinkedIn</span></a></li>
+												<li><a href="https://www.linkedin.com/in/henning-botha-694632375/" class="icon brands fa-linkedin" target="_blank"><span class="label">LinkedIn</span></a></li>
 											</ul>
 										</li>
 									</ul>
