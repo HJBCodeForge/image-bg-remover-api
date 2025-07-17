@@ -3,10 +3,11 @@ from fastapi.responses import StreamingResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from typing import Optional, List
+from datetime import datetime
 import io
 import os
 import logging
-from typing import Optional
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -50,10 +51,13 @@ async def handle_options(path: str):
 
 # Try to import optional dependencies
 try:
-    from database import get_db, APIKey, generate_api_key, create_tables
-    from models import APIKeyCreate, APIKeyResponse, BackgroundRemovalResponse, ErrorResponse
+    from database import get_db, APIKey, User, generate_api_key, create_tables, hash_password, verify_password
+    from models import (
+        APIKeyCreate, APIKeyResponse, BackgroundRemovalResponse, ErrorResponse,
+        UserCreate, UserLogin, UserResponse, TokenResponse
+    )
     from background_remover import BackgroundRemover
-    from auth import validate_api_key
+    from auth import validate_api_key, create_access_token, get_current_user, get_optional_user
     FULL_FUNCTIONALITY = True
     logger.info("All dependencies loaded successfully - full functionality enabled")
 except ImportError as e:
@@ -272,6 +276,200 @@ async def list_api_keys():
     except Exception as e:
         logger.error(f"Failed to list API keys: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to list API keys: {str(e)}")
+
+# ==================== USER AUTHENTICATION ENDPOINTS ====================
+
+@app.post("/auth/register", response_model=TokenResponse)
+async def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    """Register a new user"""
+    if not FULL_FUNCTIONALITY:
+        raise HTTPException(status_code=503, detail="User registration not available in limited mode")
+    
+    try:
+        # Check if user already exists
+        existing_user = db.query(User).filter(User.email == user.email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        
+        # Create new user
+        hashed_password = hash_password(user.password)
+        db_user = User(
+            email=user.email,
+            name=user.name,
+            password_hash=hashed_password
+        )
+        
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        
+        # Create access token
+        access_token = create_access_token(data={"sub": str(db_user.id)})
+        
+        # Update last login
+        db_user.last_login = datetime.utcnow()
+        db.commit()
+        
+        user_response = UserResponse(
+            id=db_user.id,
+            email=db_user.email,
+            name=db_user.name,
+            created_at=db_user.created_at,
+            last_login=db_user.last_login,
+            is_active=db_user.is_active,
+            api_calls_count=db_user.api_calls_count
+        )
+        
+        return TokenResponse(
+            access_token=access_token,
+            token_type="bearer",
+            user=user_response
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Registration failed: {e}")
+        raise HTTPException(status_code=500, detail="Registration failed")
+
+@app.post("/auth/login", response_model=TokenResponse)
+async def login_user(user: UserLogin, db: Session = Depends(get_db)):
+    """Login user and return access token"""
+    if not FULL_FUNCTIONALITY:
+        raise HTTPException(status_code=503, detail="User login not available in limited mode")
+    
+    try:
+        # Check if user exists
+        db_user = db.query(User).filter(User.email == user.email).first()
+        if not db_user or not verify_password(user.password, db_user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password"
+            )
+        
+        if not db_user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Account is inactive"
+            )
+        
+        # Create access token
+        access_token = create_access_token(data={"sub": str(db_user.id)})
+        
+        # Update last login
+        db_user.last_login = datetime.utcnow()
+        db.commit()
+        
+        user_response = UserResponse(
+            id=db_user.id,
+            email=db_user.email,
+            name=db_user.name,
+            created_at=db_user.created_at,
+            last_login=db_user.last_login,
+            is_active=db_user.is_active,
+            api_calls_count=db_user.api_calls_count
+        )
+        
+        return TokenResponse(
+            access_token=access_token,
+            token_type="bearer",
+            user=user_response
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login failed: {e}")
+        raise HTTPException(status_code=500, detail="Login failed")
+
+@app.get("/auth/me", response_model=UserResponse)
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
+    """Get current user information"""
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        name=current_user.name,
+        created_at=current_user.created_at,
+        last_login=current_user.last_login,
+        is_active=current_user.is_active,
+        api_calls_count=current_user.api_calls_count
+    )
+
+@app.get("/auth/api-keys", response_model=List[APIKeyResponse])
+async def get_user_api_keys(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get API keys for the current user"""
+    api_keys = db.query(APIKey).filter(APIKey.user_id == current_user.id).all()
+    return [APIKeyResponse(
+        id=key.id,
+        key=key.key,
+        name=key.name,
+        created_at=key.created_at,
+        last_used=key.last_used,
+        usage_count=key.usage_count,
+        is_active=key.is_active,
+        user_id=key.user_id
+    ) for key in api_keys]
+
+@app.post("/auth/api-keys", response_model=APIKeyResponse)
+async def create_user_api_key(
+    key_data: APIKeyCreate, 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Create a new API key for the current user"""
+    try:
+        # Generate API key
+        api_key = generate_api_key()
+        
+        # Create API key record
+        db_api_key = APIKey(
+            key=api_key,
+            name=key_data.name,
+            user_id=current_user.id,
+            is_active=True
+        )
+        db.add(db_api_key)
+        db.commit()
+        db.refresh(db_api_key)
+        
+        return APIKeyResponse(
+            id=db_api_key.id,
+            key=api_key,
+            name=key_data.name,
+            created_at=db_api_key.created_at,
+            last_used=None,
+            usage_count=0,
+            is_active=True,
+            user_id=current_user.id
+        )
+    except Exception as e:
+        logger.error(f"Failed to create API key: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create API key")
+
+@app.delete("/auth/api-keys/{key_id}")
+async def delete_user_api_key(
+    key_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete an API key owned by the current user"""
+    api_key = db.query(APIKey).filter(
+        APIKey.id == key_id,
+        APIKey.user_id == current_user.id
+    ).first()
+    
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    
+    db.delete(api_key)
+    db.commit()
+    
+    return {"message": "API key deleted successfully"}
+
+# ==================== END USER AUTHENTICATION ENDPOINTS ====================
 
 # Mount static files for assets (only if directory exists)
 if os.path.exists("assets"):

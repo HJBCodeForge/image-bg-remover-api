@@ -11,6 +11,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<link rel="stylesheet" href="assets/css/demo.css" />
+		<link rel="stylesheet" href="assets/css/auth.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 	</head>
 	<body class="is-preload">
@@ -22,10 +23,75 @@
 						<ul>
 							<li><a href="#intro">Welcome</a></li>
 							<li><a href="#one">Try It Now</a></li>
+							<li><a href="#dashboard" id="dashboardNavLink" style="display: none;">Dashboard</a></li>
 							<li><a href="#two">API Documentation</a></li>
 							<li><a href="#three">Get in touch</a></li>
 						</ul>
 					</nav>
+					<!-- User Authentication Section -->
+					<div class="auth-section">
+						<div id="authContainer">
+							<!-- Login/Register Toggle -->
+							<div class="auth-toggle">
+								<button id="loginTab" class="auth-tab active">Login</button>
+								<button id="registerTab" class="auth-tab">Register</button>
+							</div>
+							
+							<!-- Login Form -->
+							<form id="loginForm" class="auth-form active">
+								<div class="field">
+									<input type="email" id="loginEmail" placeholder="Email" required />
+								</div>
+								<div class="field">
+									<input type="password" id="loginPassword" placeholder="Password" required />
+								</div>
+								<div class="field">
+									<button type="submit" class="button primary small fit">
+										<i class="fas fa-sign-in-alt"></i> Login
+									</button>
+								</div>
+								<div id="loginResult" class="auth-result"></div>
+							</form>
+							
+							<!-- Register Form -->
+							<form id="registerForm" class="auth-form">
+								<div class="field">
+									<input type="text" id="registerName" placeholder="Full Name" required />
+								</div>
+								<div class="field">
+									<input type="email" id="registerEmail" placeholder="Email" required />
+								</div>
+								<div class="field">
+									<input type="password" id="registerPassword" placeholder="Password" required />
+								</div>
+								<div class="field">
+									<input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+								</div>
+								<div class="field">
+									<button type="submit" class="button primary small fit">
+										<i class="fas fa-user-plus"></i> Register
+									</button>
+								</div>
+								<div id="registerResult" class="auth-result"></div>
+							</form>
+						</div>
+						
+						<!-- User Dashboard (hidden by default) -->
+						<div id="userDashboard" class="user-dashboard" style="display: none;">
+							<div class="user-info">
+								<h4><i class="fas fa-user"></i> <span id="userName"></span></h4>
+								<p class="user-email" id="userEmail"></p>
+							</div>
+							<div class="dashboard-actions">
+								<button id="viewProfileBtn" class="button small">
+									<i class="fas fa-user-edit"></i> Profile
+								</button>
+								<button id="logoutBtn" class="button small">
+									<i class="fas fa-sign-out-alt"></i> Logout
+								</button>
+							</div>
+						</div>
+					</div>
 				</div>
 			</section>
 
@@ -49,15 +115,38 @@
 							<div class="demo-container">
 								<div class="demo-section">
 									<h3><i class="fas fa-key"></i> Generate API Key</h3>
-									<div class="form-group">
-										<label for="keyName">Label your API Key (e.g., "My Photo App", "Website", "Testing"):</label>
-										<input type="text" id="keyName" placeholder="Enter a descriptive name to identify this key later" />
-										<small style="color: #ccc; font-size: 0.9em; margin-top: 5px; display: block;">
-											<i class="fas fa-lightbulb"></i> This helps you identify which app or project is using this key
-										</small>
+									<div id="apiKeyGenerationContent">
+										<!-- Logged in user content -->
+										<div id="authenticatedApiKeySection" style="display: none;">
+											<div class="form-group">
+												<label for="keyName">Label your API Key (e.g., "My Photo App", "Website", "Testing"):</label>
+												<input type="text" id="keyName" placeholder="Enter a descriptive name to identify this key later" />
+												<small style="color: #ccc; font-size: 0.9em; margin-top: 5px; display: block;">
+													<i class="fas fa-lightbulb"></i> This helps you identify which app or project is using this key
+												</small>
+											</div>
+											<button onclick="generateApiKey()" class="button primary">Generate API Key</button>
+											<div id="apiKeyResult"></div>
+										</div>
+										
+										<!-- Guest user content -->
+										<div id="guestApiKeySection">
+											<div class="guest-message">
+												<p><i class="fas fa-info-circle"></i> <strong>Login Required</strong></p>
+												<p>To generate and manage API keys, please log in or create an account using the sidebar.</p>
+												<p><strong>Benefits of having an account:</strong></p>
+												<ul>
+													<li><i class="fas fa-check"></i> Manage multiple API keys</li>
+													<li><i class="fas fa-check"></i> Track usage statistics</li>
+													<li><i class="fas fa-check"></i> Access to premium features</li>
+													<li><i class="fas fa-check"></i> Priority support</li>
+												</ul>
+												<button onclick="scrollToLogin()" class="button primary">
+													<i class="fas fa-sign-in-alt"></i> Login to Get Started
+												</button>
+											</div>
+										</div>
 									</div>
-									<button onclick="generateApiKey()" class="button primary">Generate API Key</button>
-									<div id="apiKeyResult"></div>
 								</div>
 								
 								<div class="demo-section">
@@ -167,6 +256,99 @@
 									</div>
 									<button onclick="removeBackground()" class="button primary">Remove Background</button>
 									<div id="imageResult"></div>
+								</div>
+							</div>
+						</div>
+					</section>
+
+				<!-- User Dashboard -->
+					<section id="dashboard" class="wrapper style2 spotlights" style="display: none;">
+						<div class="inner">
+							<h2><i class="fas fa-tachometer-alt"></i> User Dashboard</h2>
+							
+							<!-- User Profile -->
+							<div class="dashboard-section">
+								<h3><i class="fas fa-user-circle"></i> Profile Information</h3>
+								<div class="row">
+									<div class="col-6 col-12-medium">
+										<div class="profile-info">
+											<p><strong>Name:</strong> <span id="dashboardUserName"></span></p>
+											<p><strong>Email:</strong> <span id="dashboardUserEmail"></span></p>
+											<p><strong>Member Since:</strong> <span id="memberSince"></span></p>
+											<p><strong>Account Status:</strong> <span id="accountStatus" class="status-active">Active</span></p>
+										</div>
+									</div>
+									<div class="col-6 col-12-medium">
+										<div class="usage-stats">
+											<h4><i class="fas fa-chart-bar"></i> Usage Statistics</h4>
+											<p><strong>API Calls This Month:</strong> <span id="apiCallsCount">0</span></p>
+											<p><strong>Total API Keys:</strong> <span id="totalApiKeys">0</span></p>
+											<p><strong>Last Activity:</strong> <span id="lastActivity">Never</span></p>
+										</div>
+									</div>
+								</div>
+								<div class="profile-actions">
+									<button id="editProfileBtn" class="button primary">
+										<i class="fas fa-edit"></i> Edit Profile
+									</button>
+									<button id="changePasswordBtn" class="button">
+										<i class="fas fa-key"></i> Change Password
+									</button>
+								</div>
+							</div>
+							
+							<!-- API Key Management -->
+							<div class="dashboard-section">
+								<h3><i class="fas fa-key"></i> API Key Management</h3>
+								<div class="api-key-controls">
+									<button id="createNewKeyBtn" class="button primary">
+										<i class="fas fa-plus"></i> Create New API Key
+									</button>
+									<button id="refreshKeysBtn" class="button">
+										<i class="fas fa-sync"></i> Refresh
+									</button>
+								</div>
+								<div id="apiKeysTable" class="api-keys-container">
+									<div class="loading-spinner" style="display: none;">
+										<i class="fas fa-spinner fa-spin"></i> Loading...
+									</div>
+									<div class="no-keys-message" style="display: none;">
+										<p><i class="fas fa-info-circle"></i> No API keys found. Create your first API key to get started!</p>
+									</div>
+									<table class="api-keys-table" style="display: none;">
+										<thead>
+											<tr>
+												<th>Name</th>
+												<th>Key</th>
+												<th>Created</th>
+												<th>Last Used</th>
+												<th>Usage Count</th>
+												<th>Status</th>
+												<th>Actions</th>
+											</tr>
+										</thead>
+										<tbody id="apiKeysTableBody">
+										</tbody>
+									</table>
+								</div>
+							</div>
+							
+							<!-- Quick Actions -->
+							<div class="dashboard-section">
+								<h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+								<div class="quick-actions">
+									<a href="#one" class="button">
+										<i class="fas fa-magic"></i> Process Image
+									</a>
+									<a href="#two" class="button">
+										<i class="fas fa-book"></i> View Documentation
+									</a>
+									<button id="downloadApiDocsBtn" class="button">
+										<i class="fas fa-download"></i> Download API Docs
+									</button>
+									<button id="supportTicketBtn" class="button">
+										<i class="fas fa-life-ring"></i> Contact Support
+									</button>
 								</div>
 							</div>
 						</div>
@@ -592,14 +774,13 @@ curl -X POST https://web-production-faaf.up.railway.app/remove-background \
 			</footer>
 
 		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.scrollex.min.js"></script>
-			<script src="assets/js/jquery.scrolly.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
-			<script src="assets/js/demo.js"></script>
-
-	</body>
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+		<script src="assets/js/demo.js"></script>
+		<script src="assets/js/auth.js"></script>	</body>
 </html>
