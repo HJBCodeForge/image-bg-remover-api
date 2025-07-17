@@ -507,6 +507,111 @@ async def email_config_test():
     
     return JSONResponse(content=config_status)
 
+# Debug email sending endpoint
+@app.post("/debug-email")
+async def debug_email_sending():
+    """Debug endpoint to test email sending with detailed logging"""
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        
+        # Get configuration
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        sender_email = os.getenv("SENDER_EMAIL", "noreply@hjbcodeforge.com")
+        sender_password = os.getenv("SENDER_PASSWORD", "")
+        recipient_email = os.getenv("RECIPIENT_EMAIL", "support@hjbcodeforge.com")
+        
+        logger.info(f"Debug email test - SMTP: {smtp_server}:{smtp_port}")
+        logger.info(f"Debug email test - Sender: {sender_email}")
+        logger.info(f"Debug email test - Recipient: {recipient_email}")
+        logger.info(f"Debug email test - Password configured: {bool(sender_password)}")
+        
+        # Create test message
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = "DEBUG: Email Test from Background Remover API"
+        
+        body = f"""
+This is a DEBUG email test.
+
+Configuration:
+- SMTP Server: {smtp_server}:{smtp_port}
+- Sender Email: {sender_email}
+- Recipient Email: {recipient_email}
+- Password Length: {len(sender_password) if sender_password else 0} characters
+
+If you receive this email, the configuration is working correctly.
+"""
+        
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # Try to send
+        logger.info("Debug email test - Attempting SMTP connection...")
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        
+        logger.info("Debug email test - Starting TLS...")
+        server.starttls()
+        
+        logger.info("Debug email test - Attempting login...")
+        server.login(sender_email, sender_password)
+        
+        logger.info("Debug email test - Sending message...")
+        server.send_message(msg)
+        
+        logger.info("Debug email test - Closing connection...")
+        server.quit()
+        
+        logger.info("Debug email test - SUCCESS!")
+        
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": "Debug email sent successfully!",
+                "config": {
+                    "smtp_server": smtp_server,
+                    "smtp_port": smtp_port,
+                    "sender_email": sender_email,
+                    "recipient_email": recipient_email,
+                    "password_length": len(sender_password) if sender_password else 0
+                }
+            }
+        )
+        
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"Debug email test - SMTP Authentication Error: {e}")
+        return JSONResponse(
+            content={
+                "success": False,
+                "error": "SMTP Authentication Error",
+                "details": str(e),
+                "likely_cause": "Wrong Gmail address or App Password"
+            },
+            status_code=500
+        )
+    except smtplib.SMTPException as e:
+        logger.error(f"Debug email test - SMTP Error: {e}")
+        return JSONResponse(
+            content={
+                "success": False,
+                "error": "SMTP Error",
+                "details": str(e)
+            },
+            status_code=500
+        )
+    except Exception as e:
+        logger.error(f"Debug email test - General Error: {e}")
+        return JSONResponse(
+            content={
+                "success": False,
+                "error": "General Error",
+                "details": str(e)
+            },
+            status_code=500
+        )
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
