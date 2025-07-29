@@ -17,7 +17,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-...existing code...
 
 class User(Base):
     __tablename__ = "users"
