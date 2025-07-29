@@ -113,304 +113,322 @@ async function generateApiKey() {
 
 // Background Removal Function
 async function removeBackground() {
-    const apiKey = document.getElementById('apiKeyInput').value;
-    const imageFile = document.getElementById('imageFile').files[0];
-    const resultDiv = document.getElementById('imageResult');
-    const returnJson = document.getElementById('returnJson').checked;
-    
-    if (!apiKey) {
-        showError(resultDiv, 'Please enter your API key');
-        return;
-    }
-    
-    if (!imageFile) {
-        showError(resultDiv, 'Please select an image');
-        return;
-    }
-    
-    // Validate file size
-    if (imageFile.size > 5 * 1024 * 1024) {
-        showError(resultDiv, 'Image size must be less than 5MB');
-        return;
-    }
-    
-    // Show loading state
-    showProcessingState(resultDiv, 'Processing image...');
-    
-    // Get parameters
-    const modelHint = document.getElementById('modelHint').value;
-    const alphaMatting = document.getElementById('alphaMatting').checked;
-    const foregroundThreshold = parseInt(document.getElementById('foregroundThreshold').value);
-    const backgroundThreshold = parseInt(document.getElementById('backgroundThreshold').value);
-    const erodeSize = parseInt(document.getElementById('erodeSize').value);
-    const baseSize = parseInt(document.getElementById('baseSize').value);
-    
-    // Prepare form data
-    const formData = new FormData();
-    formData.append('file', imageFile);
-    formData.append('api_key', apiKey);
-    formData.append('model_hint', modelHint);
-    formData.append('alpha_matting', alphaMatting);
-    formData.append('alpha_matting_foreground_threshold', foregroundThreshold);
-    formData.append('alpha_matting_background_threshold', backgroundThreshold);
-    formData.append('alpha_matting_erode_structure_size', erodeSize);
-    formData.append('alpha_matting_base_size', baseSize);
-    formData.append('return_json', returnJson);
-    
-    try {
-        // Set timeout to 2 minutes for large images
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 120000);
-        
-        showProcessingState(resultDiv, 'Uploading image...');
-        
-        const response = await fetch('/remove-background', {
-            method: 'POST',
-            body: formData,
-            signal: controller.signal
-        }).catch(error => {
-            if (error.name === 'AbortError') {
-                throw new Error('Processing took too long and was cancelled');
-            }
-            throw error;
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-            let errorMessage = 'Failed to remove background';
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.detail || errorMessage;
-            } catch (e) {
-                // If parsing JSON fails, use status text
-                errorMessage = response.statusText;
-            }
-            throw new Error(errorMessage);
-        }
-        
-        showProcessingState(resultDiv, 'Processing complete! Loading result...');
-        
-        if (returnJson) {
-            const data = await response.json();
-            // Show both the image and processing details
-            showResult(resultDiv, data.image, true);
-            showProcessingDetails(resultDiv, data.metadata);
-        } else {
-            const blob = await response.blob();
-            if (blob.size === 0) {
-                throw new Error('Server returned an empty response');
-            }
-            showResult(resultDiv, URL.createObjectURL(blob), false);
-        }
-    } catch (error) {
-        let errorMessage = error.message;
-        
-        // Handle specific error cases
-        if (error.name === 'AbortError') {
-            errorMessage = 'Processing took too long. Try with a smaller image or disable alpha matting.';
-        } else if (error.message.includes('empty response')) {
-            errorMessage = 'Processing failed. Try again with alpha matting disabled or use a different image.';
-        } else if (!navigator.onLine) {
-            errorMessage = 'No internet connection. Please check your connection and try again.';
-        } else if (error.message.includes('401')) {
-            errorMessage = 'Invalid API key. Please check your API key and try again.';
-        } else if (error.message.includes('500')) {
-            errorMessage = 'Server error. Please try again with alpha matting disabled or use a different image.';
-        }
-        
-        showError(resultDiv, errorMessage);
-        
-        // Add retry options
-        const retryOptions = document.createElement('div');
-        retryOptions.className = 'retry-options';
-        
-        // If alpha matting was enabled, suggest trying without it
-        if (alphaMatting) {
-            const retryNoAlphaBtn = document.createElement('button');
-            retryNoAlphaBtn.className = 'button primary';
-            retryNoAlphaBtn.innerHTML = '<i class="fas fa-redo"></i> Retry without Alpha Matting';
-            retryNoAlphaBtn.onclick = () => {
-                document.getElementById('alphaMatting').checked = false;
-                removeBackground();
-            };
-            retryOptions.appendChild(retryNoAlphaBtn);
-        }
-        
-        // Add general retry button
-        const retryBtn = document.createElement('button');
-        retryBtn.className = 'button';
-        retryBtn.innerHTML = '<i class="fas fa-redo"></i> Try Again';
-        retryBtn.onclick = removeBackground;
-        retryOptions.appendChild(retryBtn);
-        
-        resultDiv.appendChild(retryOptions);
-    }
+	const apiKey = document.getElementById('apiKeyInput').value;
+	const imageFile = document.getElementById('imageFile').files[0];
+	const resultDiv = document.getElementById('imageResult');
+	const returnJson = document.getElementById('returnJson').checked;
+	
+	if (!apiKey) {
+		showError(resultDiv, 'Please enter your API key');
+		return;
+	}
+	
+	if (!imageFile) {
+		showError(resultDiv, 'Please select an image');
+		return;
+	}
+	
+	// Validate file size
+	if (imageFile.size > 5 * 1024 * 1024) {
+		showError(resultDiv, 'Image size must be less than 5MB');
+		return;
+	}
+	
+	// Show loading state
+	showProcessingState(resultDiv, 'Processing image...');
+	
+	// Get parameters
+	const modelHint = document.getElementById('modelHint').value;
+	const alphaMatting = document.getElementById('alphaMatting').checked;
+	const foregroundThreshold = parseInt(document.getElementById('foregroundThreshold').value);
+	const backgroundThreshold = parseInt(document.getElementById('backgroundThreshold').value);
+	const erodeSize = parseInt(document.getElementById('erodeSize').value);
+	const baseSize = parseInt(document.getElementById('baseSize').value);
+	
+	// Prepare form data
+	const formData = new FormData();
+	formData.append('file', imageFile);
+	formData.append('api_key', apiKey);
+	formData.append('model_hint', modelHint);
+	formData.append('alpha_matting', alphaMatting);
+	formData.append('alpha_matting_foreground_threshold', foregroundThreshold);
+	formData.append('alpha_matting_background_threshold', backgroundThreshold);
+	formData.append('alpha_matting_erode_structure_size', erodeSize);
+	formData.append('alpha_matting_base_size', baseSize);
+	formData.append('return_json', returnJson);
+	
+	try {
+		// Set timeout to 5 minutes for large images
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+		showProcessingState(resultDiv, 'Uploading image and processing...');
+
+		let response;
+		try {
+			response = await fetch('/remove-background', {
+				method: 'POST',
+				body: formData,
+				signal: controller.signal
+			});
+		} catch (error) {
+			if (error.name === 'AbortError') {
+				showProcessingState(resultDiv, 'Processing is taking longer than expected...');
+				throw new Error('Processing took too long and was cancelled');
+			}
+			throw error;
+		} finally {
+			clearTimeout(timeoutId);
+		}
+		
+		if (!response.ok) {
+			let errorMessage = 'Failed to remove background';
+			try {
+				const errorData = await response.json();
+				errorMessage = errorData.detail || errorMessage;
+			} catch (e) {
+				// If parsing JSON fails, use status text
+				errorMessage = response.statusText;
+			}
+			throw new Error(errorMessage);
+		}
+		
+		showProcessingState(resultDiv, 'Processing complete! Loading result...');
+		
+		if (returnJson) {
+			const data = await response.json();
+			// Show both the image and processing details
+			showResult(resultDiv, data.image, true);
+			showProcessingDetails(resultDiv, data.metadata);
+		} else {
+			const blob = await response.blob();
+			if (blob.size === 0) {
+				throw new Error('Server returned an empty response');
+			}
+			showResult(resultDiv, URL.createObjectURL(blob), false);
+		}
+	} catch (error) {
+		let errorMessage = error.message;
+		
+		// Handle specific error cases
+		if (error.name === 'AbortError') {
+			errorMessage = 'Processing took too long. Try with a smaller image or disable alpha matting.';
+		} else if (error.message.includes('empty response')) {
+			errorMessage = 'Processing failed. Try again with alpha matting disabled or use a different image.';
+		} else if (!navigator.onLine) {
+			errorMessage = 'No internet connection. Please check your connection and try again.';
+		} else if (error.message.includes('401')) {
+			errorMessage = 'Invalid API key. Please check your API key and try again.';
+		} else if (error.message.includes('500')) {
+			errorMessage = 'Server error. Please try again with alpha matting disabled or use a different image.';
+		}
+		
+		showError(resultDiv, errorMessage);
+		
+		// Add retry options
+		const retryOptions = document.createElement('div');
+		retryOptions.className = 'retry-options';
+		
+		// If alpha matting was enabled, suggest trying without it
+		if (alphaMatting) {
+			const retryNoAlphaBtn = document.createElement('button');
+			retryNoAlphaBtn.className = 'button primary';
+			retryNoAlphaBtn.innerHTML = '<i class="fas fa-redo"></i> Retry without Alpha Matting';
+			retryNoAlphaBtn.onclick = () => {
+				document.getElementById('alphaMatting').checked = false;
+				removeBackground();
+			};
+			retryOptions.appendChild(retryNoAlphaBtn);
+		}
+		
+		// Add general retry button
+		const retryBtn = document.createElement('button');
+		retryBtn.className = 'button';
+		retryBtn.innerHTML = '<i class="fas fa-redo"></i> Try Again';
+		retryBtn.onclick = removeBackground;
+		retryOptions.appendChild(retryBtn);
+		
+		resultDiv.appendChild(retryOptions);
+	}
 }
 
 function showProcessingState(element, message) {
-    element.innerHTML = `
-        <div class="processing-state">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>${message}</p>
-            <p class="processing-note">This may take a few seconds. If it fails, try disabling alpha matting.</p>
-        </div>
-    `;
+	element.innerHTML = `
+		<div class="processing-state">
+			<i class="fas fa-spinner fa-spin" style="font-size:2em;"></i>
+			<p>${message}</p>
+			<div class="progress-bar-container">
+				<div class="progress-bar" id="progressBar"></div>
+			</div>
+			<p class="processing-note">This may take a while for large images or with alpha matting enabled.<br>If it fails, try disabling alpha matting or using a smaller image.</p>
+		</div>
+	`;
+	// Animate progress bar for user feedback
+	const bar = document.getElementById('progressBar');
+	if (bar) {
+		let width = 0;
+		const interval = setInterval(() => {
+			width = (width + 1) % 100;
+			bar.style.width = width + '%';
+		}, 1000);
+		// Stop animation when processing is done
+		setTimeout(() => clearInterval(interval), 300000);
+	}
 }
 
 function showError(element, message) {
-    element.innerHTML = `
-        <div class="error-message">
-            <i class="fas fa-exclamation-circle"></i>
-            <p>${message}</p>
-        </div>
-    `;
+	element.innerHTML = `
+		<div class="error-message">
+			<i class="fas fa-exclamation-circle"></i>
+			<p>${message}</p>
+		</div>
+	`;
 }
 
 function showResult(element, imageData, isBase64) {
-    const img = document.createElement('img');
-    img.className = 'result-image';
-    img.src = isBase64 ? `data:image/png;base64,${imageData}` : imageData;
-    
-    const downloadBtn = document.createElement('a');
-    downloadBtn.className = 'button primary';
-    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
-    downloadBtn.href = img.src;
-    downloadBtn.download = 'background-removed.png';
-    
-    element.innerHTML = '';
-    element.appendChild(img);
-    element.appendChild(downloadBtn);
+	const img = document.createElement('img');
+	img.className = 'result-image';
+	img.src = isBase64 ? `data:image/png;base64,${imageData}` : imageData;
+	
+	const downloadBtn = document.createElement('a');
+	downloadBtn.className = 'button primary';
+	downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+	downloadBtn.href = img.src;
+	downloadBtn.download = 'background-removed.png';
+	
+	element.innerHTML = '';
+	element.appendChild(img);
+	element.appendChild(downloadBtn);
 }
 
 function showProcessingDetails(element, metadata) {
-    const details = document.createElement('div');
-    details.className = 'processing-details';
-    details.innerHTML = `
-        <h4>Processing Details:</h4>
-        <ul>
-            <li>Processing Time: ${metadata.processing_time.toFixed(2)}s</li>
-            <li>Model Used: ${metadata.model_used}</li>
-            <li>Alpha Matting: ${metadata.alpha_matting_used ? 'Yes' : 'No'}</li>
-            ${metadata.fallback_used ? '<li><strong>Note:</strong> Used fallback processing method</li>' : ''}
-        </ul>
-    `;
-    element.appendChild(details);
+	const details = document.createElement('div');
+	details.className = 'processing-details';
+	details.innerHTML = `
+		<h4>Processing Details:</h4>
+		<ul>
+			<li>Processing Time: ${metadata.processing_time.toFixed(2)}s</li>
+			<li>Model Used: ${metadata.model_used}</li>
+			<li>Alpha Matting: ${metadata.alpha_matting_used ? 'Yes' : 'No'}</li>
+			${metadata.fallback_used ? '<li><strong>Note:</strong> Used fallback processing method</li>' : ''}
+		</ul>
+	`;
+	element.appendChild(details);
 }
 
 // Add CSS for new elements
 const style = document.createElement('style');
 style.textContent = `
-    .processing-state {
-        text-align: center;
-        padding: 2rem;
-    }
-    
-    .processing-state i {
-        font-size: 2rem;
-        color: #6cc04a;
-        margin-bottom: 1rem;
-    }
-    
-    .processing-note {
-        color: #666;
-        font-size: 0.9rem;
-    }
-    
-    .error-message {
-        background: rgba(255, 0, 0, 0.1);
-        border: 1px solid rgba(255, 0, 0, 0.2);
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-        color: #ff3333;
-    }
-    
-    .error-message i {
-        margin-right: 0.5rem;
-    }
-    
-    .result-image {
-        max-width: 100%;
-        height: auto;
-        margin-bottom: 1rem;
-        border-radius: 0.5rem;
-    }
-    
-    .processing-details {
-        background: rgba(108, 192, 74, 0.1);
-        border: 1px solid rgba(108, 192, 74, 0.2);
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-top: 1rem;
-    }
-    
-    .processing-details h4 {
-        margin: 0 0 0.5rem 0;
-        color: #6cc04a;
-    }
-    
-    .processing-details ul {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-    
-    .processing-details li {
-        margin: 0.25rem 0;
-    }
+	.processing-state {
+		text-align: center;
+		padding: 2rem;
+	}
+	
+	.processing-state i {
+		font-size: 2rem;
+		color: #6cc04a;
+		margin-bottom: 1rem;
+	}
+	
+	.processing-note {
+		color: #666;
+		font-size: 0.9rem;
+	}
+	
+	.error-message {
+		background: rgba(255, 0, 0, 0.1);
+		border: 1px solid rgba(255, 0, 0, 0.2);
+		padding: 1rem;
+		border-radius: 0.5rem;
+		margin: 1rem 0;
+		color: #ff3333;
+	}
+	
+	.error-message i {
+		margin-right: 0.5rem;
+	}
+	
+	.result-image {
+		max-width: 100%;
+		height: auto;
+		margin-bottom: 1rem;
+		border-radius: 0.5rem;
+	}
+	
+	.processing-details {
+		background: rgba(108, 192, 74, 0.1);
+		border: 1px solid rgba(108, 192, 74, 0.2);
+		padding: 1rem;
+		border-radius: 0.5rem;
+		margin-top: 1rem;
+	}
+	
+	.processing-details h4 {
+		margin: 0 0 0.5rem 0;
+		color: #6cc04a;
+	}
+	
+	.processing-details ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	
+	.processing-details li {
+		margin: 0.25rem 0;
+	}
 `;
 document.head.appendChild(style);
 
 // Add CSS for retry options
 const styleRetry = document.createElement('style');
 styleRetry.textContent = `
-    .retry-options {
-        margin-top: 1rem;
-        display: flex;
-        gap: 0.5rem;
-        justify-content: center;
-    }
-    
-    .retry-options button {
-        min-width: 150px;
-    }
-    
-    .processing-state {
-        text-align: center;
-        padding: 2rem;
-        background: rgba(108, 192, 74, 0.1);
-        border: 1px solid rgba(108, 192, 74, 0.2);
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-    }
-    
-    .processing-state i {
-        font-size: 2rem;
-        color: #6cc04a;
-        margin-bottom: 1rem;
-    }
-    
-    .processing-note {
-        color: #666;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-    }
-    
-    .error-message {
-        background: rgba(255, 0, 0, 0.1);
-        border: 1px solid rgba(255, 0, 0, 0.2);
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-        color: #ff3333;
-        text-align: center;
-    }
-    
-    .error-message i {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
+	.retry-options {
+		margin-top: 1rem;
+		display: flex;
+		gap: 0.5rem;
+		justify-content: center;
+	}
+	
+	.retry-options button {
+		min-width: 150px;
+	}
+	
+	.processing-state {
+		text-align: center;
+		padding: 2rem;
+		background: rgba(108, 192, 74, 0.1);
+		border: 1px solid rgba(108, 192, 74, 0.2);
+		border-radius: 0.5rem;
+		margin: 1rem 0;
+	}
+	
+	.processing-state i {
+		font-size: 2rem;
+		color: #6cc04a;
+		margin-bottom: 1rem;
+	}
+	
+	.processing-note {
+		color: #666;
+		font-size: 0.9rem;
+		margin-top: 0.5rem;
+	}
+	
+	.error-message {
+		background: rgba(255, 0, 0, 0.1);
+		border: 1px solid rgba(255, 0, 0, 0.2);
+		padding: 1rem;
+		border-radius: 0.5rem;
+		margin: 1rem 0;
+		color: #ff3333;
+		text-align: center;
+	}
+	
+	.error-message i {
+		font-size: 1.5rem;
+		margin-bottom: 0.5rem;
+	}
 `;
 document.head.appendChild(styleRetry);
 
