@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testApiKeys()">Test API Keys</button>
+    <button onclick="clearAuth()">Clear Auth</button>
+    <div id="result"></div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'testpassword123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    document.getElementById('result').innerHTML = `
+                        <h3>Login Success!</h3>
+                        <p>Token: ${data.access_token.substring(0, 20)}...</p>
+                        <p>User: ${data.user.email}</p>
+                    `;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('result').innerHTML = `<h3>Login Failed: ${error.detail}</h3>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<h3>Error: ${error.message}</h3>`;
+            }
+        }
+        
+        async function testApiKeys() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                document.getElementById('result').innerHTML = '<h3>No token found. Please login first.</h3>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/api-keys`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const apiKeys = await response.json();
+                    document.getElementById('result').innerHTML = `
+                        <h3>API Keys (${apiKeys.length}):</h3>
+                        <pre>${JSON.stringify(apiKeys, null, 2)}</pre>
+                    `;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('result').innerHTML = `<h3>API Keys Failed: ${error.detail}</h3>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<h3>Error: ${error.message}</h3>`;
+            }
+        }
+        
+        function clearAuth() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            document.getElementById('result').innerHTML = '<h3>Authentication cleared</h3>';
+        }
+    </script>
+</body>
+</html>

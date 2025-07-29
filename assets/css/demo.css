@@ -224,3 +224,81 @@
 	z-index: 10;
 	white-space: nowrap;
 }
+
+.retry-options {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.retry-options button {
+    min-width: 200px;
+    margin: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.retry-options button i {
+    font-size: 1rem;
+}
+
+.error-message {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    color: #ff3333;
+    text-align: center;
+}
+
+.error-message i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.processing-state {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(108, 192, 74, 0.1);
+    border: 1px solid rgba(108, 192, 74, 0.2);
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+.processing-state i {
+    font-size: 2rem;
+    color: #6cc04a;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.processing-note {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* Dark theme adjustments */
+.dark-theme .error-message {
+    background: rgba(255, 0, 0, 0.2);
+    border-color: rgba(255, 0, 0, 0.3);
+    color: #ff6666;
+}
+
+.dark-theme .processing-state {
+    background: rgba(108, 192, 74, 0.2);
+    border-color: rgba(108, 192, 74, 0.3);
+}
+
+.dark-theme .processing-note {
+    color: #999;
+}

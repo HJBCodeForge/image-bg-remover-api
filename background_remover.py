@@ -131,18 +131,6 @@ class BackgroundRemover:
     ) -> Tuple[Image.Image, Dict[str, Any]]:
         """
         Remove background from image with optimized single model approach
-        
-        Args:
-            image: Input image (PIL Image or bytes)
-            model_hint: Model hint ('human', 'object', 'general')
-            alpha_matting: Whether to use alpha matting
-            alpha_matting_foreground_threshold: Foreground threshold
-            alpha_matting_background_threshold: Background threshold
-            alpha_matting_erode_structure_size: Erosion size
-            alpha_matting_base_size: Base size for alpha matting
-            
-        Returns:
-            Tuple of (processed_image, metadata)
         """
         start_time = time.time()
         
@@ -166,35 +154,57 @@ class BackgroundRemover:
             # Ensure model is available
             model_path = self._download_model_if_needed(model_name)
             
-            # Use BackgroundRemover-main's remove function
             # Convert PIL to bytes for the remove function
             img_bytes = io.BytesIO()
             image.save(img_bytes, format='PNG')
             img_bytes.seek(0)
             
-            # Process with BackgroundRemover-main
-            try:
-                # Use the remove function with our optimized parameters
+            # First try with alpha matting if enabled
+            if alpha_matting:
+                try:
+                    logger.info("Attempting background removal with alpha matting...")
+                    # Use much more conservative alpha matting parameters
+                    output_bytes = remove(
+                        data=img_bytes.getvalue(),
+                        alpha_matting=True,
+                        alpha_matting_foreground_threshold=200,  # Much lower threshold
+                        alpha_matting_background_threshold=50,   # Much higher threshold
+                        alpha_matting_erode_structure_size=3,    # Minimal erosion
+                        alpha_matting_base_size=300,            # Minimal base size
+                        model_name=model_name
+                    )
+                    processed_image = Image.open(io.BytesIO(output_bytes))
+                    alpha_matting_used = True
+                    logger.info("Alpha matting successful")
+                except Exception as e:
+                    if "Cholesky" in str(e):
+                        logger.warning("Cholesky decomposition failed, trying without alpha matting")
+                    else:
+                        logger.warning(f"Alpha matting failed: {e}")
+                    
+                    # Immediately fall back to no alpha matting
+                    logger.info("Falling back to no alpha matting...")
+                    output_bytes = remove(
+                        data=img_bytes.getvalue(),
+                        alpha_matting=False,
+                        model_name=model_name
+                    )
+                    processed_image = Image.open(io.BytesIO(output_bytes))
+                    alpha_matting_used = False
+                    logger.info("Non-alpha matting successful")
+            else:
+                # Direct processing without alpha matting
                 output_bytes = remove(
                     data=img_bytes.getvalue(),
-                    alpha_matting=alpha_matting,
-                    alpha_matting_foreground_threshold=alpha_matting_foreground_threshold,
-                    alpha_matting_background_threshold=alpha_matting_background_threshold,
-                    alpha_matting_erode_structure_size=alpha_matting_erode_structure_size,
-                    alpha_matting_base_size=alpha_matting_base_size,
+                    alpha_matting=False,
                     model_name=model_name
                 )
-                
-                # Convert back to PIL Image
                 processed_image = Image.open(io.BytesIO(output_bytes))
-                
-            except Exception as e:
-                logger.error(f"BackgroundRemover-main processing failed: {e}")
-                # Fallback to simple processing
-                processed_image = self._simple_remove_background(image)
+                alpha_matting_used = False
             
             # Force garbage collection to free memory
             gc.collect()
+            torch.cuda.empty_cache() if torch.cuda.is_available() else None
             
             processing_time = time.time() - start_time
             
@@ -202,36 +212,79 @@ class BackgroundRemover:
                 "model_used": model_name,
                 "processing_time": processing_time,
                 "alpha_matting_enabled": alpha_matting,
+                "alpha_matting_used": alpha_matting_used,
                 "device": self.device,
                 "input_size": image.size,
                 "output_size": processed_image.size
             }
             
             logger.info(f"Background removal completed in {processing_time:.2f}s using {model_name}")
+            logger.info(f"Alpha matting {'used' if alpha_matting_used else 'not used'}")
             
             return processed_image, metadata
             
         except Exception as e:
             logger.error(f"Background removal failed: {e}")
-            raise RuntimeError(f"Background removal failed: {str(e)}")
-    
+            # Last resort fallback to simple processing
+            try:
+                logger.info("Attempting simple background removal fallback...")
+                processed_image = self._simple_remove_background(image)
+                processing_time = time.time() - start_time
+                
+                metadata = {
+                    "model_used": "simple_fallback",
+                    "processing_time": processing_time,
+                    "alpha_matting_enabled": False,
+                    "alpha_matting_used": False,
+                    "device": self.device,
+                    "input_size": image.size,
+                    "output_size": processed_image.size,
+                    "fallback_used": True
+                }
+                
+                return processed_image, metadata
+            except Exception as fallback_error:
+                logger.error(f"Simple fallback also failed: {fallback_error}")
+                raise RuntimeError(f"Background removal failed: {str(e)}")
+
     def _simple_remove_background(self, image: Image.Image) -> Image.Image:
-        """Simple fallback background removal"""
-        # Convert to RGBA
-        image = image.convert('RGBA')
-        
-        # Create a simple mask (this is a very basic implementation)
-        # In a real scenario, you'd want a proper fallback
-        data = np.array(image)
-        
-        # Simple edge detection for background removal (basic fallback)
-        # This is just to ensure the service doesn't crash
-        mask = np.ones(data.shape[:2], dtype=bool)
-        
-        # Apply mask
-        data[~mask] = [0, 0, 0, 0]  # Transparent
-        
-        return Image.fromarray(data, 'RGBA')
+        """Simple fallback background removal using basic image processing"""
+        try:
+            # Convert to RGBA
+            image = image.convert('RGBA')
+            
+            # Convert to numpy array
+            data = np.array(image)
+            
+            # Create a simple mask based on brightness
+            r, g, b, a = data.T
+            brightness = (r + g + b) / 3
+            
+            # Use Otsu's method for thresholding
+            from scipy import ndimage
+            thresh = ndimage.gaussian_filter(brightness, sigma=2)
+            mask = brightness > thresh.mean()
+            
+            # Apply some basic morphological operations
+            mask = ndimage.binary_opening(mask, structure=np.ones((3,3)))
+            mask = ndimage.binary_closing(mask, structure=np.ones((3,3)))
+            
+            # Expand mask to match image dimensions
+            mask = np.stack([mask] * 4, axis=-1)
+            
+            # Create output array
+            output = np.zeros_like(data)
+            output[mask] = data[mask]
+            
+            return Image.fromarray(output, 'RGBA')
+            
+        except Exception as e:
+            logger.error(f"Simple background removal failed: {e}")
+            # If all else fails, just make the background transparent
+            image = image.convert('RGBA')
+            data = np.array(image)
+            data[..., 3] = (data[..., :3].mean(axis=2) > 128) * 255
+            return Image.fromarray(data, 'RGBA')
     
     def health_check(self) -> Dict[str, Any]:
         """Check health status of the background remover"""

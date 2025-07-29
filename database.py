@@ -2,7 +2,7 @@ import os
 from sqlalchemy import create_engine, Column, String, DateTime, Integer, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import secrets
 import hashlib
 from dotenv import load_dotenv
@@ -23,7 +23,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True)
     api_calls_count = Column(Integer, default=0)
@@ -37,7 +37,7 @@ class APIKey(Base):
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String, unique=True, index=True)
     name = Column(String, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_used = Column(DateTime, nullable=True)
     usage_count = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)

@@ -1,0 +1,882 @@
+<!-- User Profile Modal (float above all content) -->
+<div id="profileModal" class="modal">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h2>User Profile</h2>
+			<span class="close" id="closeProfileModal">&times;</span>
+		</div>
+		<div class="modal-body">
+			<p><strong>Name:</strong> <span id="modalUserName"></span></p>
+			<p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
+			<p><strong>Member Since:</strong> <span id="modalMemberSince"></span></p>
+			<p><strong>Account Status:</strong> <span id="modalAccountStatus"></span></p>
+		</div>
+	</div>
+</div>
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Background Remover API</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel="stylesheet" href="assets/css/demo.css" />
+		<link rel="stylesheet" href="assets/css/auth.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Sidebar -->
+			<section id="sidebar">
+				<div class="inner">
+					<nav>
+						<ul>
+							<li><a href="#apiKeys" class="active">API Key</a></li>
+							<li><a href="#one">Remove Background</a></li>
+							<li><a href="#dashboard" id="dashboardNavLink" style="display: none;">Dashboard</a></li>
+							<li><a href="#two">API Documentation</a></li>
+							<li><a href="#three">Get in touch</a></li>
+						</ul>
+					</nav>
+					<!-- User Authentication Section -->
+					<div class="auth-section">
+		<!-- Only show user dashboard in sidebar when logged in -->
+		<div id="userDashboard" class="user-dashboard">
+			<div class="user-info">
+				<h4><i class="fas fa-user"></i> <span id="userName">User Name</span></h4>
+				<p class="user-email" id="userEmail">user@email.com</p>
+			</div>
+			<div class="dashboard-actions">
+				<button id="logoutBtn" class="button small">
+					<i class="fas fa-sign-out-alt"></i> Logout
+				</button>
+			</div>
+		</div>
+					</div>
+				</div>
+			</section>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+				<!-- API Keys Management -->
+					<section id="apiKeys" class="wrapper style2 spotlights">
+						<div class="inner">
+							<!-- Debug Section (only visible in testing) -->
+							<div id="debugSection" style="background: #f0f0f0; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+								<h4>🔧 Debug Tools</h4>
+								<button onclick="debugLogin()" class="button small" style="background: #28a745;">
+									Set Test Auth Token
+								</button>
+								<button onclick="clearAuth()" class="button small" style="background: #dc3545;">
+									Clear Auth
+								</button>
+								<span id="authStatus" style="margin-left: 10px; font-weight: bold;"></span>
+							</div>
+							
+							<div class="demo-container">
+								<div class="demo-section">
+									<h2><i class="fas fa-key"></i> API Key Management</h2>
+									
+									<!-- API Key Generation Section -->
+									<div class="api-key-generation-card">
+										<h3><i class="fas fa-plus-circle"></i> Generate New API Key</h3>
+										<div class="form-group">
+											<label for="newKeyName">Key Name</label>
+											<input type="text" id="newKeyName" placeholder="e.g., Production API, Development, Mobile App" class="form-control" />
+											<small class="form-text">Give your API key a descriptive name to identify its purpose</small>
+										</div>
+										<button onclick="createNewApiKey()" class="button primary">
+											<i class="fas fa-plus"></i> Generate New Key
+										</button>
+									</div>
+
+									<!-- API Keys List Section -->
+									<div class="api-keys-list-section">
+										<div class="section-header">
+											<h3><i class="fas fa-list"></i> Your API Keys</h3>
+											<button onclick="refreshApiKeys()" class="button small">
+												<i class="fas fa-sync-alt"></i> Refresh
+											</button>
+										</div>
+										
+										<div id="apiKeysLoadingSpinner" class="loading-spinner" style="display: none;">
+											<i class="fas fa-spinner fa-spin"></i> Loading API keys...
+										</div>
+										
+										<div id="apiKeysErrorMessage" class="error-message" style="display: none;"></div>
+										
+										<div class="api-keys-container">
+											<table class="api-keys-table" id="apiKeysTable">
+												<thead>
+													<tr>
+														<th>Name</th>
+														<th>API Key</th>
+														<th>Created</th>
+														<th>Last Used</th>
+														<th>Usage Count</th>
+														<th>Status</th>
+														<th>Actions</th>
+													</tr>
+												</thead>
+												<tbody id="apiKeysTableBody">
+													<!-- API keys will be populated here -->
+												</tbody>
+											</table>
+											
+											<div id="noApiKeysMessage" class="no-keys-message" style="display: none;">
+												<i class="fas fa-info-circle"></i>
+												<p>You haven't created any API keys yet.</p>
+												<p>Generate your first API key to start using the Background Remover API!</p>
+											</div>
+										</div>
+									</div>
+
+									<!-- Edit API Key Modal -->
+									<div id="editApiKeyModal" class="modal" style="display: none;">
+										<div class="modal-content">
+											<div class="modal-header">
+												<h3>Edit API Key</h3>
+												<span class="close" onclick="closeEditModal()">&times;</span>
+											</div>
+											<div class="modal-body">
+												<input type="hidden" id="editKeyId" />
+												<div class="form-group">
+													<label for="editKeyName">Key Name</label>
+													<input type="text" id="editKeyName" class="form-control" />
+												</div>
+												<div class="modal-actions">
+													<button onclick="saveKeyChanges()" class="button primary">
+														<i class="fas fa-save"></i> Save Changes
+													</button>
+													<button onclick="closeEditModal()" class="button">
+														Cancel
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<!-- Delete Confirmation Modal -->
+									<div id="deleteConfirmModal" class="modal" style="display: none;">
+										<div class="modal-content">
+											<div class="modal-header">
+												<h3>Delete API Key</h3>
+												<span class="close" onclick="closeDeleteModal()">&times;</span>
+											</div>
+											<div class="modal-body">
+												<p class="warning-text">
+													<i class="fas fa-exclamation-triangle"></i>
+													Are you sure you want to delete this API key?
+												</p>
+												<p>Key: <strong id="deleteKeyName"></strong></p>
+												<p>This action cannot be undone. Any applications using this key will stop working.</p>
+												<input type="hidden" id="deleteKeyId" />
+												<div class="modal-actions">
+													<button onclick="confirmDeleteKey()" class="button primary danger">
+														<i class="fas fa-trash"></i> Delete Permanently
+													</button>
+													<button onclick="closeDeleteModal()" class="button">
+														Cancel
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</section>
+				<!-- Remove Background -->
+					<section id="one" class="wrapper style2 spotlights">
+						<div class="inner">
+							<div class="demo-container">
+								<div class="demo-section">
+									<h3><i class="fas fa-robot"></i> Model Selection</h3>
+									<div class="form-group">
+										<label for="modelHint">Choose Model:</label>
+										<select id="modelHint">
+											<option value="human">Human Segmentation - Best for people and portraits</option>
+											<option value="object">Object Detection - Best for products and objects</option>
+											<option value="general">General Purpose - Balanced performance</option>
+										</select>
+									</div>
+								</div>
+								
+								<div class="demo-section">
+									<h3><i class="fas fa-paint-brush"></i> Alpha Matting Options</h3>
+									<div class="form-group">
+										<label>
+											<input type="checkbox" id="alphaMatting" checked />
+											Enable Alpha Matting (Better edge quality)
+											<div class="tooltip-container">
+												<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+												<span class="tooltip-text">
+													Alpha matting creates smoother, more natural edges by analyzing the transparency of pixels along the border. This produces higher quality results but takes slightly longer to process.
+												</span>
+											</div>
+										</label>
+									</div>
+									<div class="form-group">
+										<button type="button" id="resetButton" class="button primary" onclick="resetAlphaMattingOptions()">
+											Reset
+										</button>
+									</div>
+									<div id="alphaMattingOptions" style="margin-left: 20px;">
+										<div class="form-group">
+											<label for="foregroundThreshold">
+												Foreground Threshold (0-255):
+												<div class="tooltip-container">
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+													<span class="tooltip-text">
+														Controls how aggressively the algorithm identifies foreground pixels. Higher values (240) are more selective, lower values (180) include more borderline pixels as foreground.
+													</span>
+												</div>
+											</label>
+											<input type="range" id="foregroundThreshold" min="0" max="255" value="240" />
+											<span id="foregroundValue">240</span>
+										</div>
+										<div class="form-group">
+											<label for="backgroundThreshold">
+												Background Threshold (0-255):
+												<div class="tooltip-container">
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+													<span class="tooltip-text">
+														Controls how aggressively the algorithm identifies background pixels. Lower values (10) are more selective, higher values (50) include more borderline pixels as background.
+													</span>
+												</div>
+											</label>
+											<input type="range" id="backgroundThreshold" min="0" max="255" value="10" />
+											<span id="backgroundValue">10</span>
+										</div>
+										<div class="form-group">
+											<label for="erodeSize">
+												Erosion Size (1-20):
+												<div class="tooltip-container">
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+													<span class="tooltip-text">
+														Controls edge smoothing. Higher values (15) create smoother edges but may remove fine details. Lower values (5) preserve more detail but may leave rough edges.
+													</span>
+												</div>
+											</label>
+											<input type="range" id="erodeSize" min="1" max="20" value="10" />
+											<span id="erodeValue">10</span>
+										</div>
+										<div class="form-group">
+											<label for="baseSize">
+												Base Size (500-2000):
+												<div class="tooltip-container">
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+													<span class="tooltip-text">
+														Controls processing resolution. Higher values (1500) give better quality but slower processing. Lower values (800) process faster but may reduce edge quality.
+													</span>
+												</div>
+											</label>
+											<input type="range" id="baseSize" min="500" max="2000" value="1000" />
+											<span id="baseSizeValue">1000</span>
+										</div>
+									</div>
+								</div>
+								
+								<div class="demo-section">
+									<h3><i class="fas fa-image"></i> Remove Background</h3>
+									<div class="form-group">
+										<label for="apiKeyInput">Your API Key:</label>
+										<input type="text" id="apiKeyInput" placeholder="Enter your API key" />
+									</div>
+									<div class="form-group">
+										<label for="imageFile">Select Image:</label>
+										<div class="file-input-container">
+											<input type="file" id="imageFile" accept="image/*" />
+										</div>
+									</div>
+									<div class="form-group">
+										<label>
+											<input type="checkbox" id="returnJson" />
+											Return JSON Response (with base64 image)
+										</label>
+									</div>
+									<button onclick="removeBackground()" class="button primary">Remove Background</button>
+									<div id="imageResult"></div>
+								</div>
+							</div>
+						</div>
+					</section>
+
+				<!-- User Dashboard -->
+					<section id="dashboard" class="wrapper style2 spotlights" style="display: none;">
+						<div class="inner">
+							<h2><i class="fas fa-tachometer-alt"></i> User Dashboard</h2>
+							
+							<!-- User Profile -->
+							<div class="dashboard-section">
+								<h3><i class="fas fa-user-circle"></i> Profile Information</h3>
+								<div class="row">
+									<div class="col-6 col-12-medium">
+										<div class="profile-info">
+											<p><strong>Name:</strong> <span id="dashboardUserName"></span></p>
+											<p><strong>Email:</strong> <span id="dashboardUserEmail"></span></p>
+											<p><strong>Member Since:</strong> <span id="memberSince"></span></p>
+											<p><strong>Account Status:</strong> <span id="accountStatus" class="status-active">Active</span></p>
+										</div>
+									</div>
+									<div class="col-6 col-12-medium">
+										<div class="usage-stats">
+											<h4><i class="fas fa-chart-bar"></i> Usage Statistics</h4>
+											<p><strong>API Calls This Month:</strong> <span id="apiCallsCount">0</span></p>
+											<p><strong>Total API Keys:</strong> <span id="totalApiKeys">0</span></p>
+											<p><strong>Last Activity:</strong> <span id="lastActivity">Never</span></p>
+										</div>
+									</div>
+								</div>
+								<div class="profile-actions">
+									<button id="editProfileBtn" class="button primary">
+										<i class="fas fa-edit"></i> Edit Profile
+									</button>
+									<button id="changePasswordBtn" class="button">
+										<i class="fas fa-key"></i> Change Password
+									</button>
+								</div>
+							</div>
+							
+							<!-- API Key Management -->
+							<div class="dashboard-section">
+								<h3><i class="fas fa-key"></i> API Key Management</h3>
+								<div class="api-key-controls">
+									<button id="createNewKeyBtn" class="button primary">
+										<i class="fas fa-plus"></i> Create New API Key
+									</button>
+									<button id="refreshKeysBtn" class="button">
+										<i class="fas fa-sync"></i> Refresh
+									</button>
+								</div>
+								<div id="apiKeysTable" class="api-keys-container">
+									<div class="loading-spinner" style="display: none;">
+										<i class="fas fa-spinner fa-spin"></i> Loading...
+									</div>
+									<div class="no-keys-message" style="display: none;">
+										<p><i class="fas fa-info-circle"></i> No API keys found. Create your first API key to get started!</p>
+									</div>
+									<table class="api-keys-table" style="display: none;">
+										<thead>
+											<tr>
+												<th>Name</th>
+												<th>Key</th>
+												<th>Created</th>
+												<th>Last Used</th>
+												<th>Usage Count</th>
+												<th>Status</th>
+												<th>Actions</th>
+											</tr>
+										</thead>
+										<tbody id="apiKeysTableBody">
+										</tbody>
+									</table>
+								</div>
+							</div>
+							
+							<!-- Quick Actions -->
+							<div class="dashboard-section">
+								<h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+								<div class="quick-actions">
+									<a href="#one" class="button">
+										<i class="fas fa-magic"></i> Process Image
+									</a>
+									<a href="#two" class="button">
+										<i class="fas fa-book"></i> View Documentation
+									</a>
+									<button id="downloadApiDocsBtn" class="button">
+										<i class="fas fa-download"></i> Download API Docs
+									</button>
+									<button id="supportTicketBtn" class="button">
+										<i class="fas fa-life-ring"></i> Contact Support
+									</button>
+								</div>
+							</div>
+						</div>
+					</section>
+
+				<!-- API Documentation -->
+					<section id="two" class="wrapper style3 fade-up">
+						<div class="inner">
+							<h2>API Documentation</h2>
+
+							<!-- Overview -->
+								<section>
+									<h3><i class="fas fa-clipboard-list"></i> Overview</h3>
+									<p>The Background Remover API provides AI-powered background removal capabilities for images. This RESTful API allows you to remove backgrounds from images with high precision and speed, designed for integration into web applications, mobile apps, and automated workflows.</p>
+									<div class="row">
+										<div class="col-6 col-12-medium">
+											<ul>
+												<li><strong>Base URL:</strong> <code>https://web-production-faaf.up.railway.app</code></li>
+												<li><strong>API Version:</strong> 1.0.0</li>
+												<li><strong>Content Type:</strong> multipart/form-data</li>
+												<li><strong>Response Format:</strong> JSON/Binary</li>
+											</ul>
+										</div>
+										<div class="col-6 col-12-medium">
+											<ul>
+												<li><strong>Supported Formats:</strong> JPEG, PNG, WebP, BMP, TIFF</li>
+												<li><strong>Max File Size:</strong> 5MB</li>
+												<li><strong>Processing Time:</strong> 1-5 seconds</li>
+												<li><strong>Rate Limiting:</strong> No limits (usage tracked)</li>
+											</ul>
+										</div>
+									</div>
+								</section>
+
+							<!-- Authentication -->
+								<section>
+									<h3><i class="fas fa-lock"></i> Authentication</h3>
+									<p>The API uses API key authentication. You must include your API key in requests to access protected endpoints.</p>
+									
+									<h4>Authentication Methods</h4>
+									<p><strong>Method 1: Form Data (Recommended)</strong></p>
+									<pre><code>// Include in form data
+formData.append('api_key', 'bgr_your_api_key_here');</code></pre>
+									
+									<p><strong>Method 2: Authorization Header</strong></p>
+									<pre><code>// Include in request headers
+Authorization: Bearer bgr_your_api_key_here</code></pre>
+									
+									<blockquote>
+										<strong>Note:</strong> API keys are generated using the <code>/api-keys</code> endpoint and start with the prefix <code>bgr_</code>. Keep your API key secure and never expose it in client-side code.
+									</blockquote>
+								</section>
+
+							<!-- Quick Start -->
+								<section>
+									<h3><i class="fas fa-rocket"></i> Quick Start Guide</h3>
+									<div class="features">
+										<section>
+											<span class="icon solid major fa-key"></span>
+											<h4>1. Generate API Key</h4>
+											<p>Create a new API key using the <code>POST /api-keys</code> endpoint with a descriptive label to identify your application or project.</p>
+										</section>
+										<section>
+											<span class="icon solid major fa-cloud-upload-alt"></span>
+											<h4>2. Send Image</h4>
+											<p>Send your image file to the <code>POST /remove-background</code> endpoint with your API key and optional parameters.</p>
+										</section>
+										<section>
+											<span class="icon solid major fa-magic"></span>
+											<h4>3. Get Result</h4>
+											<p>Receive the processed image with transparent background in PNG format, ready for use in your application.</p>
+										</section>
+									</div>
+								</section>
+
+							<!-- API Endpoints -->
+								<section>
+									<h3><i class="fas fa-satellite-dish"></i> API Endpoints</h3>
+									
+									<h4><i class="fas fa-key"></i> Generate API Key</h4>
+									<p><code><strong>POST</strong> /api-keys</code></p>
+									<p>Generate a new API key for authentication.</p>
+									
+									<p><strong>Request Parameters:</strong></p>
+									<ul>
+										<li><code>key_name</code> (string, required) - Descriptive name for the API key</li>
+									</ul>
+									
+									<p><strong>Response:</strong></p>
+									<pre><code>{
+  "id": 1,
+  "key": "bgr_abc123def456789",
+  "name": "My Photo Editor App",
+  "created_at": "2025-01-15T10:30:00Z",
+  "last_used": null,
+  "usage_count": 0,
+  "is_active": true
+}</code></pre>
+
+									<h4><i class="fas fa-image"></i> Remove Background</h4>
+									<p><code><strong>POST</strong> /remove-background</code></p>
+									<p>Remove background from an image using AI processing.</p>
+									
+									<p><strong>Request Parameters:</strong></p>
+									<ul>
+										<li><code>file</code> (file, required) - Image file to process</li>
+										<li><code>api_key</code> (string, required) - Your API key</li>
+										<li><code>alpha_matting</code> (boolean, optional) - Enable alpha matting for better edges (default: false)</li>
+										<li><code>alpha_matting_foreground_threshold</code> (integer, optional) - Foreground threshold 0-255 (default: 270)</li>
+										<li><code>alpha_matting_background_threshold</code> (integer, optional) - Background threshold 0-255 (default: 10)</li>
+										<li><code>alpha_matting_erode_structure_size</code> (integer, optional) - Erosion size 1-20 (default: 10)</li>
+										<li><code>alpha_matting_base_size</code> (integer, optional) - Base size 500-2000 (default: 1000)</li>
+									</ul>
+									
+									<p><strong>Response:</strong> Binary PNG image data with transparent background</p>
+									
+									<h4><i class="fas fa-clipboard-list"></i> List API Keys</h4>
+									<p><code><strong>GET</strong> /api-keys</code></p>
+									<p>List all API keys for management purposes.</p>
+									
+									<p><strong>Response:</strong></p>
+									<pre><code>{
+  "api_keys": [
+	{
+	  "api_key": "bgr_abc1...def4",
+	  "name": "My Photo Editor App",
+	  "status": "active",
+	  "created_at": "2025-01-15T10:30:00Z"
+	}
+  ]
+}</code></pre>
+
+									<h4><i class="fas fa-heartbeat"></i> Health Check</h4>
+									<p><code><strong>GET</strong> /health</code></p>
+									<p>Check API status and system health.</p>
+									
+									<p><strong>Response:</strong></p>
+									<pre><code>{
+  "status": "healthy",
+  "mode": "full",
+  "memory_usage": "245MB",
+  "background_remover": {
+	"status": "initialized",
+	"memory_usage": "active"
+  }
+}</code></pre>
+
+									<h4><i class="fas fa-info-circle"></i> API Information</h4>
+									<p><code><strong>GET</strong> /</code></p>
+									<p>Get API version and endpoint information.</p>
+									
+									<p><strong>Response:</strong></p>
+									<pre><code>{
+  "message": "Background Remover API",
+  "version": "1.0.0",
+  "status": "running",
+  "endpoints": {
+	"generate_api_key": "POST /api-keys",
+	"list_api_keys": "GET /api-keys",
+	"remove_background": "POST /remove-background",
+	"health": "GET /health"
+  }
+}</code></pre>
+								</section>
+
+							<!-- Code Examples -->
+								<section>
+									<h3><i class="fas fa-code"></i> Code Examples</h3>
+									
+									<h4>JavaScript/Node.js</h4>
+									<pre><code>// Generate API Key
+const generateApiKey = async (keyName) => {
+  const formData = new FormData();
+  formData.append('key_name', keyName);
+  
+  const response = await fetch('https://web-production-faaf.up.railway.app/api-keys', {
+	method: 'POST',
+	body: formData
+  });
+  
+  return await response.json();
+};
+
+// Remove Background
+const removeBackground = async (imageFile, apiKey) => {
+  const formData = new FormData();
+  formData.append('file', imageFile);
+  formData.append('api_key', apiKey);
+  formData.append('alpha_matting', 'true');
+  
+  const response = await fetch('https://web-production-faaf.up.railway.app/remove-background', {
+	method: 'POST',
+	body: formData
+  });
+  
+  if (!response.ok) {
+	throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return await response.blob(); // Returns processed image
+};</code></pre>
+
+									<h4>Python</h4>
+									<pre><code>import requests
+
+# Generate API Key
+def generate_api_key(key_name):
+	response = requests.post(
+		'https://web-production-faaf.up.railway.app/api-keys',
+		data={'key_name': key_name}
+	)
+	return response.json()
+
+# Remove Background
+def remove_background(image_path, api_key):
+	with open(image_path, 'rb') as image_file:
+		files = {'file': image_file}
+		data = {
+			'api_key': api_key,
+			'alpha_matting': 'true'
+		}
+		
+		response = requests.post(
+			'https://web-production-faaf.up.railway.app/remove-background',
+			files=files,
+			data=data
+		)
+		
+		if response.ok:
+			return response.content  # Binary image data
+		else:
+			raise Exception(f"Error: {response.status_code}")</code></pre>
+
+									<h4>cURL</h4>
+									<pre><code># Generate API Key
+curl -X POST https://web-production-faaf.up.railway.app/api-keys \
+  -F "key_name=My Photo Editor App"
+
+# Remove Background
+curl -X POST https://web-production-faaf.up.railway.app/remove-background \
+  -F "file=@image.jpg" \
+  -F "api_key=bgr_your_api_key_here" \
+  -F "alpha_matting=true" \
+  --output result.png</code></pre>
+								</section>
+
+							<!-- Error Handling -->
+								<section>
+									<h3><i class="fas fa-exclamation-triangle"></i> Error Handling</h3>
+									<p>The API returns standard HTTP status codes and JSON error responses:</p>
+									
+									<h4>Common HTTP Status Codes</h4>
+									<ul>
+										<li><code>200 OK</code> - Request successful</li>
+										<li><code>400 Bad Request</code> - Invalid request parameters</li>
+										<li><code>401 Unauthorized</code> - Invalid or missing API key</li>
+										<li><code>413 Payload Too Large</code> - File exceeds 5MB limit</li>
+										<li><code>500 Internal Server Error</code> - Server processing error</li>
+									</ul>
+									
+									<h4>Error Response Format</h4>
+									<pre><code>{
+  "detail": "Invalid API key"
+}</code></pre>
+									
+									<h4>Error Handling Example</h4>
+									<pre><code>try {
+  const result = await removeBackground(imageFile, apiKey);
+  // Handle success
+} catch (error) {
+  if (error.response) {
+	console.error('API Error:', error.response.data.detail);
+  } else {
+	console.error('Network Error:', error.message);
+  }
+}</code></pre>
+								</section>
+
+							<!-- Alpha Matting -->
+								<section>
+									<h3><i class="fas fa-paint-brush"></i> Alpha Matting Options</h3>
+									<p>Alpha matting provides superior edge quality by analyzing pixel transparency. Enable it for professional results:</p>
+									
+									<div class="row">
+										<div class="col-6 col-12-medium">
+											<ul>
+												<li><strong>Foreground Threshold (0-255):</strong> Controls foreground pixel detection. Higher values = more selective</li>
+												<li><strong>Background Threshold (0-255):</strong> Controls background pixel detection. Lower values = more selective</li>
+											</ul>
+										</div>
+										<div class="col-6 col-12-medium">
+											<ul>
+												<li><strong>Erosion Size (1-20):</strong> Controls edge smoothing. Higher values = smoother edges</li>
+												<li><strong>Base Size (500-2000):</strong> Processing resolution. Higher values = better quality, slower processing</li>
+											</ul>
+										</div>
+									</div>
+								</section>
+
+							<!-- Best Practices -->
+								<section>
+									<h3><i class="fas fa-check-circle"></i> Best Practices</h3>
+									<div class="features">
+										<section>
+											<span class="icon solid major fa-shield-alt"></span>
+											<h4>Security</h4>
+											<ul>
+												<li>Never expose API keys in client-side code</li>
+												<li>Use environment variables for API keys</li>
+												<li>Implement rate limiting on your end</li>
+											</ul>
+										</section>
+										<section>
+											<span class="icon solid major fa-rocket"></span>
+											<h4>Performance</h4>
+											<ul>
+												<li>Optimize image size before uploading</li>
+												<li>Use alpha matting only when needed</li>
+												<li>Implement caching for processed images</li>
+											</ul>
+										</section>
+										<section>
+											<span class="icon solid major fa-exclamation-triangle"></span>
+											<h4>Error Handling</h4>
+											<ul>
+												<li>Always handle HTTP errors gracefully</li>
+												<li>Implement retry logic for network issues</li>
+												<li>Validate file types before uploading</li>
+											</ul>
+										</section>
+									</div>
+								</section>
+
+							<!-- Support -->
+								<section>
+									<h3><i class="fas fa-life-ring"></i> Support & Resources</h3>
+									<div class="row">
+										<div class="col-6 col-12-medium">
+											<h4>Get Help</h4>
+											<ul>
+												<li><strong>Email:</strong> <a href="mailto:support@hjbcodeforge.com">support@hjbcodeforge.com</a></li>
+												<li><strong>Response Time:</strong> 24-48 hours</li>
+												<li><strong>API Status:</strong> <a href="/health">Check API Health</a></li>
+											</ul>
+										</div>
+										<div class="col-6 col-12-medium">
+											<h4>Resources</h4>
+											<ul>
+												<li><strong>Demo:</strong> Interactive demo above</li>
+												<li><strong>GitHub:</strong> <a href="https://github.com/HJBCodeForge" target="_blank">View Source</a></li>
+												<li><strong>API Version:</strong> 1.0.0</li>
+											</ul>
+										</div>
+									</div>
+								</section>
+						</div>
+					</section>
+
+				<!-- Get in Touch -->
+					<section id="three" class="wrapper style1 fade-up">
+						<div class="inner">
+							<h2>Get in touch</h2>
+							<p>Have questions about the Background Remover API or need support? We'd love to hear from you. Send us a message and we'll get back to you as soon as possible.</p>
+							<div class="split style1">
+								<section>
+									<form id="contactForm" method="post">
+										<div class="fields">
+											<div class="field half">
+												<label for="name">Name</label>
+												<input type="text" name="name" id="name" required />
+											</div>
+											<div class="field half">
+												<label for="email">Email</label>
+												<input type="email" name="email" id="email" required />
+											</div>
+											<div class="field">
+												<label for="message">Message</label>
+												<textarea name="message" id="message" rows="5" required></textarea>
+											</div>
+										</div>
+										<ul class="actions">
+											<li><button type="submit" class="button primary">Send Message</button></li>
+										</ul>
+										<div id="contactResult"></div>
+									</form>
+								</section>
+								<section>
+									<ul class="contact">
+										<li>
+											<h3>Address</h3>
+											<span>Ottawa, Ontario<br />
+											Canada</span>
+										</li>
+										<li>
+											<h3>Email</h3>
+											<a href="mailto:support@hjbcodeforge.com">support@hjbcodeforge.com</a>
+										</li>
+										<li>
+											<h3>Social</h3>
+											<ul class="icons">
+												<li><a href="https://x.com/HJBCodeForge" class="icon brands fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+												<li><a href="https://www.facebook.com/profile.php?id=61573054515636" class="icon brands fa-facebook" target="_blank"><span class="label">Facebook</span></a></li>
+												<li><a href="https://github.com/HJBCodeForge" class="icon brands fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+												<li><a href="https://www.instagram.com/hjbcodeforge/" class="icon brands fa-instagram" target="_blank"><span class="label">Instagram</span></a></li>
+												<li><a href="https://www.linkedin.com/in/henning-botha-694632375/" class="icon brands fa-linkedin" target="_blank"><span class="label">LinkedIn</span></a></li>
+											</ul>
+										</li>
+									</ul>
+								</section>
+							</div>
+						</div>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer" class="wrapper style1-alt">
+				<div class="inner">
+					<ul class="menu">
+						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="https://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+		<script src="assets/js/demo.js"></script>
+		<script src="assets/js/auth.js"></script>
+		<script src="assets/js/api-key-management.js"></script>
+		<script>
+		  // Debug function to manually set authentication token
+		  window.debugSetAuth = function(token, user) {
+			localStorage.setItem('authToken', token);
+			if (user) {
+			  localStorage.setItem('userData', JSON.stringify(user));
+			}
+			console.log('Auth token set:', token.substring(0, 20) + '...');
+			location.reload();
+		  };
+		  
+		  // Debug function with preset token
+		  window.debugLogin = function() {
+			const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzU1OTU0ODI3fQ.k3hS4kT34-iaAIa9_HxJfBHC_CEWzb6DAHzfB4aidjk';
+			const user = {"id":2,"email":"test@example.com","name":"Test User","created_at":"2025-07-24T13:11:01.517237","last_login":"2025-07-24T13:13:47.440116","is_active":true,"api_calls_count":0};
+			debugSetAuth(token, user);
+		  };
+		  
+		  // Clear authentication
+		  window.clearAuth = function() {
+			localStorage.removeItem('authToken');
+			localStorage.removeItem('userData');
+			console.log('Auth cleared');
+			updateAuthStatus();
+		  };
+		  
+		  // Update auth status display
+		  window.updateAuthStatus = function() {
+			const token = localStorage.getItem('authToken');
+			const statusEl = document.getElementById('authStatus');
+			if (statusEl) {
+			  statusEl.textContent = token ? '✅ Authenticated' : '❌ No Auth';
+			  statusEl.style.color = token ? 'green' : 'red';
+			}
+		  };
+
+		  // Prevent access to dashboard if not logged in
+		  (function() {
+			const token = localStorage.getItem('authToken');
+			if (!token) {
+			  console.log('No auth token found. Use debugLogin() to set one for testing.');
+			  // Commented out redirect for debugging
+			  // window.location.href = '/';
+			}
+			// Update auth status on page load
+			setTimeout(updateAuthStatus, 100);
+		  })();
+		</script>
+	</body>
+</html>

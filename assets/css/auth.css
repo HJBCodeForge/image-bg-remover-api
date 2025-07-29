@@ -107,7 +107,7 @@
 
 .user-info h4 {
     margin: 0 0 0.5rem 0;
-    color: #6cc04a;
+    color: #ffffff;
     font-size: 0.9rem;
 }
 
@@ -190,15 +190,21 @@
 
 /* API Keys Table */
 .api-keys-container {
-    margin-top: 1rem;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .api-keys-table {
     width: 100%;
+    min-width: 800px;
     border-collapse: collapse;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 0.5rem;
-    overflow: hidden;
+    background: transparent;
+    margin: 0;
 }
 
 .api-keys-table th,
@@ -206,24 +212,42 @@
     padding: 1rem;
     text-align: left;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
 }
 
 .api-keys-table th {
     background: rgba(108, 192, 74, 0.2);
     color: #6cc04a;
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
-.api-keys-table tr:hover {
+.api-keys-table tbody tr:hover {
     background: rgba(255, 255, 255, 0.05);
 }
 
+.api-keys-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Key display and actions */
 .api-key-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-family: monospace;
     background: rgba(0, 0, 0, 0.3);
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     font-size: 0.8rem;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .key-hidden {
@@ -233,11 +257,13 @@
 .key-actions {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: nowrap;
 }
 
 .key-actions .button {
     padding: 0.25rem 0.5rem;
     font-size: 0.7rem;
+    white-space: nowrap;
 }
 
 .loading-spinner {
@@ -281,27 +307,22 @@
     margin-right: 0.5rem;
 }
 
-/* Responsive Design */
+/* Responsive adjustments */
 @media screen and (max-width: 768px) {
-    .auth-section {
-        padding: 0.5rem;
-    }
-    
-    .dashboard-actions {
-        flex-direction: column;
-    }
-    
-    .profile-actions, .api-key-controls, .quick-actions {
-        flex-direction: column;
-    }
-    
-    .api-keys-table {
-        font-size: 0.8rem;
+    .api-keys-container {
+        margin: 0 -1rem;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
     }
     
     .api-keys-table th,
     .api-keys-table td {
-        padding: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    .api-key-display {
+        max-width: 200px;
     }
 }
 
@@ -370,4 +391,257 @@
     outline: none;
     border-color: #6cc04a;
     background: rgba(255, 255, 255, 0.15);
+}
+
+/* API Key Management Styles */
+.api-key-generation-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.api-key-generation-card h3 {
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.api-keys-list-section {
+    margin-top: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: #fff;
+}
+
+.api-keys-table {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.api-keys-table thead {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.api-keys-table th,
+.api-keys-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.api-keys-table th {
+    font-weight: 600;
+    color: #fff;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.api-keys-table td {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.api-keys-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.api-keys-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.api-key-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.api-key-text {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    word-break: break-all;
+}
+
+.copy-key-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.copy-key-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.copy-key-btn.copied {
+    background: #6cc04a;
+    border-color: #6cc04a;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background: rgba(108, 192, 74, 0.2);
+    color: #6cc04a;
+    border: 1px solid #6cc04a;
+}
+
+.status-badge.inactive {
+    background: rgba(255, 100, 100, 0.2);
+    color: #ff6464;
+    border: 1px solid #ff6464;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-button {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.action-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.action-button.edit {
+    border-color: #3498db;
+    color: #3498db;
+}
+
+.action-button.edit:hover {
+    background: rgba(52, 152, 219, 0.2);
+}
+
+.action-button.delete {
+    border-color: #e74c3c;
+    color: #e74c3c;
+}
+
+.action-button.delete:hover {
+    background: rgba(231, 76, 60, 0.2);
+}
+
+.no-keys-message {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.no-keys-message i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 2rem;
+    color: #fff;
+}
+
+.error-message {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid #e74c3c;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    color: #e74c3c;
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.warning-text {
+    color: #f39c12;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.danger {
+    background: #e74c3c !important;
+    border-color: #e74c3c !important;
+}
+
+.danger:hover {
+    background: #c0392b !important;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* Demo Section Styles */
+.demo-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.demo-section {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.api-keys-list-section {
+    margin-top: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: #fff;
 }
