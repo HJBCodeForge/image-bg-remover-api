@@ -14,7 +14,11 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./bg_remover.db")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 Base = declarative_base()
+
+# Ensure tables are created at import time (app startup)
+create_tables()
 
 class User(Base):
     __tablename__ = "users"
