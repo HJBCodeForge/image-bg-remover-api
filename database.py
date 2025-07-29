@@ -67,8 +67,8 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 def verify_password(password: str, password_hash: str) -> bool:
-...existing code...
-# Ensure tables are created at import time (app startup)
-create_tables()
     """Verify password against hash"""
     return hash_password(password) == password_hash
+
+# Ensure tables are created at import time (app startup)
+create_tables()
