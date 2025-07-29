@@ -17,8 +17,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# Ensure tables are created at import time (app startup)
-create_tables()
+...existing code...
 
 class User(Base):
     __tablename__ = "users"
@@ -69,5 +68,8 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 def verify_password(password: str, password_hash: str) -> bool:
+...existing code...
+# Ensure tables are created at import time (app startup)
+create_tables()
     """Verify password against hash"""
     return hash_password(password) == password_hash
