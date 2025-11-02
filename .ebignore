@@ -1,0 +1,29 @@
+# Exclude large, unused assets to speed up EB uploads and reduce disk usage
+
+# VCS and editor
+.git/
+.gitignore
+.DS_Store
+.vscode/
+
+# Tests and local scripts
+test_*.py
+*.ipynb
+*.log
+
+# Vendored project extras not needed at runtime
+backgroundremover-main/olddist/
+backgroundremover-main/examplefiles/
+
+# Keep only the small u2netp.pth model; exclude chunked model folders
+backgroundremover-main/models/u2aa/
+backgroundremover-main/models/u2ab/
+backgroundremover-main/models/u2ac/
+backgroundremover-main/models/u2ad/
+backgroundremover-main/models/u2haa/
+backgroundremover-main/models/u2hab/
+backgroundremover-main/models/u2hac/
+backgroundremover-main/models/u2had/
+
+# Node modules if any (none expected here)
+node_modules/

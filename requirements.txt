@@ -1,31 +1,21 @@
 # Use CPU-only PyTorch wheels to reduce size on Elastic Beanstalk
 --extra-index-url https://download.pytorch.org/whl/cpu
---no-cache-dir
---prefer-binary
 
-# Password hashing
-bcrypt
 fastapi>=0.116.1
 uvicorn>=0.35.0
 python-multipart>=0.0.9
 pillow>=11.0.0
-sqlalchemy>=2.0.23
 python-dotenv>=1.0.0
 pydantic>=2.11.7
-psutil>=5.9.0
 numpy>=1.26.4,<2.0  # Pin to 1.x for compatibility with other packages
-# Authentication dependencies
-email-validator>=2.0.0
-PyJWT>=2.8.0
-# BackgroundRemover-main dependencies (optimized)
+psutil>=5.9.0
+# BackgroundRemover-main dependencies (optimized for images only)
 certifi
 charset-normalizer
 filelock
 idna
 requests
 scikit-image
-scipy
-pymatting
 filetype
 tqdm
 hsh

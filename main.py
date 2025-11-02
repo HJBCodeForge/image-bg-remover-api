@@ -74,7 +74,7 @@ async def favicon():
 async def remove_background_endpoint(
     file: UploadFile = File(...),
     model_hint: str = Form("general"),
-    alpha_matting: bool = Form(True),
+    alpha_matting: bool = Form(False),
     alpha_matting_foreground_threshold: int = Form(240),
     alpha_matting_background_threshold: int = Form(10),
     alpha_matting_erode_structure_size: int = Form(10),

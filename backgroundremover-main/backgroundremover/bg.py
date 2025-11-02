@@ -2,10 +2,11 @@ import io
 import os
 import typing
 from PIL import Image
-from pymatting.alpha.estimate_alpha_cf import estimate_alpha_cf
-from pymatting.foreground.estimate_foreground_ml import estimate_foreground_ml
-from pymatting.util.util import stack_images
-from scipy.ndimage.morphology import binary_erosion
+"""Utilities for background removal.
+
+This file is lightly modified to make heavy optional dependencies (scipy, pymatting)
+load lazily only when alpha matting is requested, reducing install footprint.
+"""
 try:
     # Make moviepy optional to avoid heavy dependencies when video processing isn't used
     from moviepy import VideoFileClip
@@ -122,6 +123,17 @@ def alpha_matting_cutout(
     erode_structure_size,
     base_size,
 ):
+    # Lazy imports to avoid requiring scipy/pymatting unless explicitly needed
+    try:
+        from scipy.ndimage.morphology import binary_erosion
+        from pymatting.alpha.estimate_alpha_cf import estimate_alpha_cf
+        from pymatting.foreground.estimate_foreground_ml import estimate_foreground_ml
+        from pymatting.util.util import stack_images
+    except Exception as e:
+        raise ImportError(
+            "Alpha matting requires scipy and pymatting; install them or disable alpha_matting."
+        ) from e
+
     size = img.size
 
     img.thumbnail((base_size, base_size), Image.LANCZOS)
