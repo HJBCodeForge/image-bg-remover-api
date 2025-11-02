@@ -28,5 +28,7 @@ ffmpeg-python
 hsh
 more_itertools
 waitress
-# Note: torch and torchvision installed separately with CPU-only index in Dockerfile
+torch==2.0.1
+torchvision==0.15.2
+# For AWS Elastic Beanstalk: torch and torchvision must be installed via requirements.txt
 # Force deployment timestamp: 2025-07-15T17:35:00Z
