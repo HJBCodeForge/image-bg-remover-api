@@ -1,43 +1,6 @@
-# Railway Deployment Guide
+# Railway Migration Guide Deprecated
 
-## Why Railway?
-- **8GB RAM** - Perfect for ML models like rembg
-- **Free 500 hours/month** - Very generous free tier
-- **Easy deployment** - Git-based like Render
-- **No cold starts** - Better performance than serverless
-
-## Quick Deployment Steps
-
-### 1. Sign up for Railway
-1. Go to [railway.app](https://railway.app)
-2. Sign up with GitHub (same account you used for this repo)
-3. Connect your GitHub account
-
-### 2. Deploy the API
-1. Click "New Project" in Railway dashboard
-2. Choose "Deploy from GitHub repo"
-3. Select `HJBCodeForge/image-bg-remover-api`
-4. Railway will automatically detect it's a Python app
-
-### 3. Configure Environment Variables
-In Railway dashboard:
-- Set `ENVIRONMENT=production`
-- Set `PORT=8000` (Railway auto-assigns this)
-
-### 4. Update Frontend URLs
-Once deployed, Railway will give you a URL like:
-`https://your-app-name.railway.app`
-
-Update these files:
-- `demo.html` - Change API_BASE_URL
-- `index.html` - Change API_BASE_URL  
-- `apiindex.html` - Change API_BASE_URL  
-- `api-status.html` - Change default URL
-
-### 5. Deploy Frontend
-Two options:
-1. **Same Railway project**: Add static site service
-2. **Separate service**: Deploy frontend to Netlify/Vercel
+**Note:** Railway deployment and migration is no longer supported for this project. Please use AWS Elastic Beanstalk or another recommended platform.
 
 ## Expected Performance
 - **Startup time**: 30-60 seconds (much faster than Render)

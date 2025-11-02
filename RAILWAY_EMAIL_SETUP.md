@@ -1,43 +1,6 @@
-# Railway Email Configuration Setup
+# Railway Email Setup Deprecated
 
-## Current Status
-✅ Code is working correctly  
-❌ Email credentials not configured in Railway  
-📧 Response: "Message received! We'll get back to you soon. (Email forwarding not configured)"
-
-## Quick Fix - Set Railway Environment Variables
-
-### 1. Go to Railway Dashboard
-- Visit https://railway.app/dashboard
-- Select your `bg-remover-api` project
-- Go to the "Variables" tab
-
-### 2. Add These Environment Variables
-
-#### For Gmail (Recommended):
-```
-SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
-SENDER_EMAIL=your-gmail@gmail.com
-SENDER_PASSWORD=your-app-password
-RECIPIENT_EMAIL=support@hjbcodeforge.com
-```
-
-#### For SendGrid (Production Alternative):
-```
-SMTP_SERVER=smtp.sendgrid.net
-SMTP_PORT=587
-SENDER_EMAIL=apikey
-SENDER_PASSWORD=your-sendgrid-api-key
-RECIPIENT_EMAIL=support@hjbcodeforge.com
-```
-
-### 3. Gmail App Password Setup
-1. Go to https://myaccount.google.com/
-2. Security → 2-Step Verification → App passwords
-3. Select "Mail" and your device
-4. Copy the 16-character password
-5. Use this as `SENDER_PASSWORD` in Railway
+**Note:** Railway email configuration is no longer supported for this project. Please use AWS or another recommended platform for deployment and email setup.
 
 ### 4. After Adding Variables
 - Railway will automatically redeploy

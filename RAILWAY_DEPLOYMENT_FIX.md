@@ -36,47 +36,9 @@ In Railway dashboard:
    - `PYTHONPATH`: `/app`
    - `ENVIRONMENT`: `production`
 
-### 4. Deployment Steps
+# Railway Deployment No Longer Supported
 
-1. **Commit the fixes:**
-   ```bash
-   git add -A
-   git commit -m "Add Railway Dockerfile and configuration"
-   git push
-   ```
-
-2. **Deploy on Railway:**
-   - Go to your Railway project
-   - Click "Deploy" or it should auto-deploy from GitHub
-   - Wait for build to complete (~2-5 minutes)
-
-3. **Monitor deployment:**
-   - Check build logs in Railway dashboard
-   - Look for any errors in the deployment tab
-
-### 5. Testing Deployment
-
-Once deployed, test these endpoints:
-- `https://your-app.railway.app/` - Root endpoint
-- `https://your-app.railway.app/health` - Health check
-- `https://your-app.railway.app/docs` - API documentation
-
-### 6. Common Issues & Solutions
-
-#### Issue: Build still fails
-**Solution:** Delete Dockerfile and let Railway use Nixpacks:
-```bash
-rm Dockerfile
-git commit -am "Use Nixpacks instead of Docker"
-git push
-```
-
-#### Issue: App crashes on startup
-**Solution:** Check if all dependencies are in requirements.txt:
-```bash
-pip freeze > requirements.txt
-git commit -am "Update requirements.txt"
-git push
+**Note:** Deployment to Railway is deprecated and no longer supported for this project. Please use AWS Elastic Beanstalk or another recommended platform.
 ```
 
 #### Issue: Port binding error
