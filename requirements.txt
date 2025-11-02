@@ -1,3 +1,8 @@
+# Use CPU-only PyTorch wheels to reduce size on Elastic Beanstalk
+--extra-index-url https://download.pytorch.org/whl/cpu
+--no-cache-dir
+--prefer-binary
+
 # Password hashing
 bcrypt
 fastapi>=0.116.1
@@ -23,12 +28,9 @@ scipy
 pymatting
 filetype
 tqdm
-moviepy
-ffmpeg-python
 hsh
 more_itertools
-waitress
-torch==2.0.1
-torchvision==0.15.2
-# For AWS Elastic Beanstalk: torch and torchvision must be installed via requirements.txt
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
+# For AWS Elastic Beanstalk: torch and torchvision must be installed via requirements.txt (CPU wheels)
 # Force deployment timestamp: 2025-07-15T17:35:00Z

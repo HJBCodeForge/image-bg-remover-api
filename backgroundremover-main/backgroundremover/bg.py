@@ -6,7 +6,11 @@ from pymatting.alpha.estimate_alpha_cf import estimate_alpha_cf
 from pymatting.foreground.estimate_foreground_ml import estimate_foreground_ml
 from pymatting.util.util import stack_images
 from scipy.ndimage.morphology import binary_erosion
-from moviepy import VideoFileClip
+try:
+    # Make moviepy optional to avoid heavy dependencies when video processing isn't used
+    from moviepy import VideoFileClip
+except Exception:
+    VideoFileClip = None
 import numpy as np
 import torch
 import torch.nn.functional
@@ -216,6 +220,10 @@ def remove(
 
 
 def iter_frames(path):
+    if VideoFileClip is None:
+        raise ImportError(
+            "moviepy is not installed. Video processing is disabled."
+        )
     return VideoFileClip(path).resized(height=320).iter_frames(dtype="uint8")
 
 
