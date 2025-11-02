@@ -27,7 +27,6 @@ jobs:
             - 'requirements.txt'
             - 'Dockerfile'
             - '.dockerignore'
-            - 'railway.json'
             - 'start.sh'
             - 'backgroundremover-main/**'
           frontend:
@@ -35,34 +34,8 @@ jobs:
             - 'assets/**'
             - 'vercel.json'
 
-  deploy-backend:
-    needs: changes
-    if: needs.changes.outputs.backend == 'true' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
-    - name: Install Railway CLI
-      run: npm install -g @railway/cli
-      
-    - name: Deploy Backend to Railway
-      run: railway deploy --service ${{ secrets.RAILWAY_SERVICE_ID }}
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        
-    - name: Backend Health Check
-      run: |
-        echo "Waiting for Railway deployment..."
-        sleep 30
-        curl -f https://web-production-faaf.up.railway.app/health || exit 1
-        echo "✅ Backend deployed successfully!"
+  # Backend deployment via Railway removed. If you want AWS EB or another target,
+  # we can add a dedicated job here later.
 
   deploy-frontend:
     needs: changes
