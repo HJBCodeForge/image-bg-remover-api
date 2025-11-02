@@ -112,27 +112,28 @@ async function generateApiKey() {
 }
 
 // Background Removal Function
+const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+
+function validateFile(file) {
+	const resultDiv = document.getElementById('imageResult');
+	if (!file) return false;
+	if (file.size > MAX_BYTES) {
+		showError(resultDiv, 'Image too large. Maximum allowed size is 5MB.');
+		return false;
+	}
+	return true;
+}
+
 async function removeBackground() {
-	const apiKey = document.getElementById('apiKeyInput').value;
 	const imageFile = document.getElementById('imageFile').files[0];
 	const resultDiv = document.getElementById('imageResult');
 	const returnJson = document.getElementById('returnJson').checked;
-	
-	if (!apiKey) {
-		showError(resultDiv, 'Please enter your API key');
-		return;
-	}
 	
 	if (!imageFile) {
 		showError(resultDiv, 'Please select an image');
 		return;
 	}
-	
-	// Validate file size
-	if (imageFile.size > 5 * 1024 * 1024) {
-		showError(resultDiv, 'Image size must be less than 5MB');
-		return;
-	}
+	if (!validateFile(imageFile)) return;
 	
 	// Show loading state
 	showProcessingState(resultDiv, 'Processing image...');
@@ -148,7 +149,6 @@ async function removeBackground() {
 	// Prepare form data
 	const formData = new FormData();
 	formData.append('file', imageFile);
-	formData.append('api_key', apiKey);
 	formData.append('model_hint', modelHint);
 	formData.append('alpha_matting', alphaMatting);
 	formData.append('alpha_matting_foreground_threshold', foregroundThreshold);
@@ -213,12 +213,12 @@ async function removeBackground() {
 		// Handle specific error cases
 		if (error.name === 'AbortError') {
 			errorMessage = 'Processing took too long. Try with a smaller image or disable alpha matting.';
+		} else if (error.message.toLowerCase().includes('5mb') || error.message.toLowerCase().includes('too large')) {
+			errorMessage = 'Image too large. Please select a file that is 5MB or smaller.';
 		} else if (error.message.includes('empty response')) {
 			errorMessage = 'Processing failed. Try again with alpha matting disabled or use a different image.';
 		} else if (!navigator.onLine) {
 			errorMessage = 'No internet connection. Please check your connection and try again.';
-		} else if (error.message.includes('401')) {
-			errorMessage = 'Invalid API key. Please check your API key and try again.';
 		} else if (error.message.includes('500')) {
 			errorMessage = 'Server error. Please try again with alpha matting disabled or use a different image.';
 		}
@@ -566,7 +566,7 @@ function initializeDragAndDrop() {
 			dropZone.classList.remove('drag-over');
 		}
 		
-		dropZone.addEventListener('drop', handleDrop, false);
+	dropZone.addEventListener('drop', handleDrop, false);
 		
 		function handleDrop(e) {
 			const dt = e.dataTransfer;
@@ -574,6 +574,10 @@ function initializeDragAndDrop() {
 			
 			if (files.length > 0) {
 				const file = files[0];
+				if (!validateFile(file)) {
+					imageFile.value = '';
+					return;
+				}
 				
 				// Validate file type
 				const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/bmp', 'image/tiff'];
@@ -597,6 +601,14 @@ function initializeDragAndDrop() {
 				}
 			}
 		}
+
+		// Validate on file selection change as well
+		imageFile.addEventListener('change', function() {
+			const file = imageFile.files && imageFile.files[0];
+			if (!validateFile(file)) {
+				imageFile.value = '';
+			}
+		});
 	}
 }
 

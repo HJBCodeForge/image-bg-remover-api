@@ -2,139 +2,109 @@
 
 🎨 A powerful REST API for removing backgrounds from images with AI-powered precision.
 
-## 🌐 Live Demo
+## 🌐 Live Demo (No API Key Needed)
 
-- **Frontend:** https://bg-remover-frontend-vfhc.onrender.com
-- **Backend API:** https://bg-remover-api-052i.onrender.com
-- **API Documentation:** https://bg-remover-api-052i.onrender.com/docs
+- Open the homepage (`index.html`) and try the built-in demo. Upload an image and process it with no API key and no limits.
 
 ## ✨ Features
 
-- 🔑 **API Key Management**: Generate and manage API keys for secure access
-- 🖼️ **AI Background Removal**: Advanced background removal using rembg + ONNX
-- 📊 **Usage Tracking**: Monitor API key usage and statistics
-- 🚀 **Fast Processing**: Efficient image processing optimized for production
-- 🔒 **Secure Authentication**: Token-based authentication with rate limiting
-- 📦 **Easy Integration**: RESTful API with comprehensive documentation
-- 🎯 **Multiple Formats**: Support for JPEG, PNG, WebP, BMP, and TIFF
-- 💻 **Web Interface**: User-friendly demo interface included
+- 🖼️ AI Background Removal: Advanced background removal using state-of-the-art models
+- 🚀 Fast Processing: Efficient image processing optimized for production
+-  Easy Integration: Simple REST API
+- 🎯 Multiple Formats: Support for JPEG, PNG, WebP, BMP, and TIFF
+- 💻 Web Interface: User-friendly demo interface included
+- 🧪 Demo Mode: No API key required, no limits
 
 ## 🚀 Quick Start
 
-### Using the Live API
+### Using the Demo
 
-1. **Visit the demo:** https://bg-remover-frontend-vfhc.onrender.com
-2. **Generate an API key** using the web interface
-3. **Upload an image** and test background removal
-4. **Use the API** in your own applications
+1. Open the app in your browser
+2. Go to “Try Background Removal”
+3. Upload an image and click “Remove Background”
 
-### API Usage
+### API Usage (Demo Mode)
+# Background Remover API
 
-```bash
-# Generate API key
-curl -X POST "https://bg-remover-api-052i.onrender.com/api-keys" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My App"}'
+AI-powered image background removal with a built-in web demo.
 
-# Remove background
-curl -X POST "https://bg-remover-api-052i.onrender.com/remove-background?return_json=true" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -F "file=@your_image.jpg"
+## Features
+
+- No sign-in or API key required
+- 5MB max upload size per image
+- Model hint and alpha matting options
+- Returns PNG (binary) or JSON with base64 image and processing metadata
+- Demo UI included on the homepage
+
+## Run locally
+
+1) Install dependencies
+```zsh
+pip install -r requirements.txt
 ```
 
-## 🏃‍♂️ Local Development
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/HJBCodeForge/image-bg-remover-api.git
-   cd image-bg-remover-api
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Run the API:
-   ```bash
-   python main.py
-   ```
-
-4. Visit: http://localhost:8000
-
-## 📋 API Endpoints
-
-### Authentication
-All endpoints (except key generation) require an API key:
-```
-Authorization: Bearer YOUR_API_KEY
+2) Start the server
+```zsh
+python main.py
+# or
+uvicorn main:app --reload --port 8000
 ```
 
-### Core Endpoints
+3) Open the homepage in your browser and use “Try Background Removal”
 
-- `POST /api-keys` - Generate new API key
-- `GET /api-keys` - List all API keys
-- `POST /remove-background` - Remove background from image
-- `DELETE /api-keys/{id}` - Deactivate API key
-- `GET /health` - Health check
-- `GET /docs` - Interactive API documentation
+## API
 
-### Background Removal
+### POST /remove-background
+Removes the background from an uploaded image.
 
-**Request:**
-```bash
-POST /remove-background?return_json=true
-Content-Type: multipart/form-data
-Authorization: Bearer YOUR_API_KEY
+Request (multipart/form-data):
+- `file`: image file (<= 5MB)
+- `model_hint`: one of `human` | `object` | `general` (default `general`)
+- `alpha_matting`: boolean (default `true`)
+- `alpha_matting_foreground_threshold`: integer 0–255 (default `240`)
+- `alpha_matting_background_threshold`: integer 0–255 (default `10`)
+- `alpha_matting_erode_structure_size`: integer 1–20 (default `10`)
+- `alpha_matting_base_size`: integer 500–2000 (default `1000`)
+- `return_json`: boolean (default `false`)
 
-file: [image file]
-```
-
-**Response:**
+Responses:
+- Binary PNG (default)
+- JSON when `return_json=true`:
 ```json
 {
-  "success": true,
-  "message": "Background removed successfully",
-  "processed_image_url": "data:image/png;base64,iVBORw0KGgoAAAANS...",
-  "processing_time": 2.34
+  "image": "<base64 PNG>",
+  "metadata": {
+    "model_used": "u2netp",
+    "processing_time": 2.34,
+    "alpha_matting_enabled": true,
+    "alpha_matting_used": false,
+    "device": "cpu",
+    "input_size": [width, height],
+    "output_size": [width, height]
+  }
 }
 ```
 
-## 🛠️ Technical Details
+Example usage:
+```zsh
+# Binary response (saved to processed.png)
+curl -X POST http://localhost:8000/remove-background \
+  -F file=@your_image.jpg \
+  --output processed.png
 
-### Built With
-- **FastAPI** - Modern web framework for APIs
-- **rembg** - AI background removal library
-- **ONNX Runtime** - Optimized inference engine
-- **SQLite** - Database for API key management
-- **Pillow** - Image processing library
+# JSON response (base64 image + metadata)
+curl -X POST http://localhost:8000/remove-background \
+  -F file=@your_image.jpg \
+  -F return_json=true
+```
 
-### Supported Formats
-- **Input:** JPEG, PNG, WebP, BMP, TIFF
-- **Output:** PNG with transparency
+### GET /health
+Basic health status and model availability.
 
-### Performance
-- **Processing Time:** 1-5 seconds per image
-- **File Size Limit:** 10MB per image
-- **Concurrent Requests:** Supported
+## Notes
 
-## 🔧 Configuration
-
-### Environment Variables
-- `HOST` - Server host (default: 0.0.0.0)
-- `PORT` - Server port (default: 8000)
-- `ENVIRONMENT` - Environment mode (development/production)
-
-### Database
-- Uses SQLite for simplicity and portability
-- Automatic table creation on startup
-- Persistent storage across restarts
-
-## 🚀 Deployment
-
-This project is deployed on Render.com with both backend and frontend services.
+- Client-side and server-side validations enforce the 5MB image size limit.
+- For production use, you can enable rate limits or add authentication if needed.
 
 ### Files
 - `render.yaml` - Render deployment configuration
@@ -152,13 +122,10 @@ This project is deployed on Render.com with both backend and frontend services.
 - **Deployment Guide:** See `DEPLOYMENT_SUCCESS.md`
 - **Live Demo:** https://bg-remover-frontend-vfhc.onrender.com
 
-## 🔒 Security
+## 🔒 Security (Production)
 
-- API key authentication required
-- Rate limiting and usage tracking
-- Input validation and sanitization
-- CORS protection configured
-- Secure error handling
+- For demos, API keys are disabled and no limits are enforced.
+- For production, re-enable API key validation and usage controls.
 
 ## 🤝 Contributing
 

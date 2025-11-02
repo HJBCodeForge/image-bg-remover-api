@@ -12,6 +12,7 @@
 		<meta name="description" content="Remove backgrounds from images instantly using AI. Professional-grade background removal API with easy integration." />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<link rel="stylesheet" href="assets/css/landing.css" />
+		<link rel="stylesheet" href="assets/css/demo.css" />
 		<link rel="stylesheet" href="assets/css/fontawesome-all.min.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 	</head>
@@ -25,38 +26,12 @@
 							<li><a href="#intro">Welcome</a></li>
 							<li><a href="#features">Features</a></li>
 							<li><a href="#examples">Examples</a></li>
-							<li><a href="#pricing">Pricing</a></li>
 							<li><a href="#use-cases">Use Cases</a></li>
-							<li><a href="#get-started">Get Started</a></li>
+							<li><a href="#get-started">Try It</a></li>
 							<li><a href="#contact">Contact</a></li>
 						</ul>
 					</nav>
-					<!-- User Authentication Section -->
-					<div class="auth-section">
-						<div id="authContainer">
-							<!-- Login/Register Toggle -->
-							<div class="auth-toggle">
-								<button id="loginTab" class="auth-tab active">Login</button>
-								<button id="registerTab" class="auth-tab">Register</button>
-							</div>
-						</div>
-						
-						<!-- User Dashboard (hidden by default) -->
-						<div id="userDashboard" class="user-dashboard" style="display: none;">
-							<div class="user-info">
-								<h4><i class="fas fa-user"></i> <span id="userName"></span></h4>
-								<p class="user-email" id="userEmail"></p>
-							</div>
-							<div class="dashboard-actions">
-								<button id="viewProfileBtn" class="button small">
-									<i class="fas fa-user-edit"></i> Profile
-								</button>
-								<button id="logoutBtn" class="button small">
-									<i class="fas fa-sign-out-alt"></i> Logout
-								</button>
-							</div>
-						</div>
-					</div>
+					<!-- Auth UI removed -->
 				</div>
 			</section>
 
@@ -70,7 +45,7 @@
 							<p>Remove backgrounds from images instantly with our advanced AI technology.<br />
 							Professional-grade results, simple API integration, unlimited possibilities.</p>
 							<ul class="actions">
-								<li><a href="#pricing" class="button scrolly">Get Started Free</a></li>
+								<li><a href="#get-started" class="button scrolly">Try It Now</a></li>
 								<li><a href="#examples" class="button scrolly">See Examples</a></li>
 							</ul>
 						</div>
@@ -170,87 +145,12 @@
 							</div>
 
 							<ul class="actions centered">
-								<li><a href="#pricing" class="button primary large scrolly">Try It Now</a></li>
+								<li><a href="#get-started" class="button primary large scrolly">Try It Now</a></li>
 							</ul>
 						</div>
 					</section>
 
-				<!-- Pricing Section -->
-					<section id="pricing" class="wrapper style2 fade-up">
-						<div class="inner">
-							<h2><i class="fas fa-tag"></i> Simple, Transparent Pricing</h2>
-							<p>Choose the plan that fits your needs</p>
-							
-							<div class="row">
-								<div class="col-4 col-12-medium">
-									<div class="pricing-card starter" onclick="selectPricingPlan('starter')">
-										<div class="plan-header">
-											<h3>Starter</h3>
-											<div class="price">
-												<span class="currency">$</span>
-												<span class="amount">0</span>
-												<span class="period">/month</span>
-											</div>
-										</div>
-										<ul class="features">
-											<li><i class="fas fa-check"></i> 1 images/per day</li>
-											<li><i class="fas fa-check"></i> Standard processing</li>
-											<li><i class="fas fa-check"></i> Email support</li>
-											<li><i class="fas fa-check"></i> API access</li>
-										</ul>
-										<ul class="actions">
-											<li><a href="#get-started" class="button pricingCard fit scrolly">Get Started</a></li>
-										</ul>
-									</div>
-								</div>
-								<div class="col-4 col-12-medium">
-									<div class="pricing-card professional featured" onclick="selectPricingPlan('professional')">
-										<div class="plan-header">
-											<h3>Professional</h3>
-											<div class="price">
-												<span class="currency">$</span>
-												<span class="amount">29</span>
-												<span class="period">/month</span>
-											</div>
-											<div class="badge">Most Popular</div>
-										</div>
-										<ul class="features">
-											<li><i class="fas fa-check"></i> 5,000 images/month</li>
-											<li><i class="fas fa-check"></i> Priority processing</li>
-											<li><i class="fas fa-check"></i> Priority support</li>
-											<li><i class="fas fa-check"></i> Advanced API features</li>
-											<li><i class="fas fa-check"></i> Batch processing</li>
-										</ul>
-										<ul class="actions">
-											<li><a href="#get-started" class="button pricingCard fit scrolly">Get Started</a></li>
-										</ul>
-									</div>
-								</div>
-								<div class="col-4 col-12-medium">
-									<div class="pricing-card enterprise" onclick="selectPricingPlan('enterprise')">
-										<div class="plan-header">
-											<h3>Enterprise</h3>
-											<div class="price">
-												<span class="currency">$</span>
-												<span class="amount">99</span>
-												<span class="period">/month</span>
-											</div>
-										</div>
-										<ul class="features">
-											<li><i class="fas fa-check"></i> Unlimited images</li>
-											<li><i class="fas fa-check"></i> Dedicated infrastructure</li>
-											<li><i class="fas fa-check"></i> 24/7 support</li>
-											<li><i class="fas fa-check"></i> Custom integrations</li>
-											<li><i class="fas fa-check"></i> SLA guarantees</li>
-										</ul>
-										<ul class="actions">
-											<li><a href="#contact" class="button pricingCard fit scrolly">Get Started</a></li>
-										</ul>
-									</div>
-								</div>
-							</div>
-						</div>
-					</section>
+				<!-- Pricing Section removed -->
 
 				<!-- Use Cases Section -->
 					<section id="use-cases" class="wrapper style3 fade-up">
@@ -281,68 +181,115 @@
 						</div>
 					</section>
 
-				<!-- Get Started Section -->
+				<!-- Get Started Section replaced with interactive demo -->
 					<section id="get-started" class="wrapper style2 fade-up">
 						<div class="inner">
-							<div style="text-align: center;">
-								<h2>Ready to Get Started?</h2>
-								<p>Join thousands of developers already using our API</p>
-								
-								<!-- Authentication Forms -->
-								<div class="row" style="margin-top: 2rem;">
-									<div class="col-6 col-12-medium">
-										<!-- Login Form -->
-										<div class="auth-form-container">
-											<h3><i class="fas fa-sign-in-alt"></i> Login</h3>
-											<form id="loginForm" class="auth-form active">
-												<div class="field">
-													<input type="email" id="loginEmail" placeholder="Email" required />
-												</div>
-												<div class="field password-field">
-													<input type="password" id="loginPassword" placeholder="Password" required />
-													<span class="password-toggle" onclick="togglePassword('loginPassword')">
-														<i class="fas fa-eye" id="loginPasswordToggleIcon"></i>
-													</span>
-												</div>
-												<div class="field">
-													<button type="submit" class="button primary fit">
-														<i class="fas fa-sign-in-alt"></i> Login
-													</button>
-												</div>
-												<div id="loginResult" class="auth-result"></div>
-											</form>
-										</div>
+							<h2 style="text-align:center;">Try Background Removal</h2>
+							<p style="text-align:center;">Upload an image, enter your API key, and see the result instantly.</p>
+							<div class="demo-container">
+								<div class="demo-section">
+									<h3><i class="fas fa-robot"></i> Model Selection</h3>
+									<div class="form-group">
+										<label for="modelHint">Choose Model:</label>
+										<select id="modelHint">
+											<option value="human">Human Segmentation - Best for people and portraits</option>
+											<option value="object">Object Detection - Best for products and objects</option>
+											<option value="general" selected>General Purpose - Balanced performance</option>
+										</select>
 									</div>
-									<div class="col-6 col-12-medium">
-										<!-- Register Form -->
-										<div class="auth-form-container">
-											<h3><i class="fas fa-user-plus"></i> Register</h3>
-											<form id="registerForm" class="auth-form">
-												<div class="field">
-													<input type="text" id="registerName" placeholder="Name" required />
-												</div>
-												<div class="field">
-													<input type="email" id="registerEmail" placeholder="Email" required />
-												</div>
-												<div class="field password-field">
-													<input type="password" id="registerPassword" placeholder="Password" required />
-													<span class="password-toggle" onclick="togglePassword('registerPassword')">
-														<i class="fas fa-eye" id="registerPasswordToggleIcon"></i>
+								</div>
+
+								<div class="demo-section">
+									<h3><i class="fas fa-paint-brush"></i> Alpha Matting Options</h3>
+									<div class="form-group">
+										<label>
+											<input type="checkbox" id="alphaMatting" checked />
+											Enable Alpha Matting (Better edge quality)
+											<div class="tooltip-container">
+												<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+												<span class="tooltip-text">
+													Alpha matting creates smoother, more natural edges by analyzing the transparency of pixels along the border. This produces higher quality results but takes slightly longer to process.
+												</span>
+											</div>
+										</label>
+									</div>
+									<div class="form-group">
+										<button type="button" id="resetButton" class="button primary" onclick="resetAlphaMattingOptions()">
+											Reset
+										</button>
+									</div>
+									<div id="alphaMattingOptions" style="margin-left: 20px;">
+										<div class="form-group">
+											<label for="foregroundThreshold">
+												Foreground Threshold (0-255):
+												<div class="tooltip-container">
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+													<span class="tooltip-text">
+														Controls how aggressively the algorithm identifies foreground pixels. Higher values (240) are more selective, lower values (180) include more borderline pixels as foreground.
 													</span>
 												</div>
-												<div class="field">
-													<button type="submit" class="button primary fit">
-														<i class="fas fa-user-plus"></i> Register
-													</button>
+											</label>
+											<input type="range" id="foregroundThreshold" min="0" max="255" value="240" />
+											<span id="foregroundValue">240</span>
+										</div>
+										<div class="form-group">
+											<label for="backgroundThreshold">
+												Background Threshold (0-255):
+												<div class="tooltip-container">
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+													<span class="tooltip-text">
+														Controls how aggressively the algorithm identifies background pixels. Lower values (10) are more selective, higher values (50) include more borderline pixels as background.
+													</span>
 												</div>
-												<div id="registerResult" class="auth-result"></div>
-											</form>
+											</label>
+											<input type="range" id="backgroundThreshold" min="0" max="255" value="10" />
+											<span id="backgroundValue">10</span>
+										</div>
+										<div class="form-group">
+											<label for="erodeSize">
+												Erosion Size (1-20):
+												<div class="tooltip-container">
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+													<span class="tooltip-text">
+														Controls edge smoothing. Higher values (15) create smoother edges but may remove fine details. Lower values (5) preserve more detail but may leave rough edges.
+													</span>
+												</div>
+											</label>
+											<input type="range" id="erodeSize" min="1" max="20" value="10" />
+											<span id="erodeValue">10</span>
+										</div>
+										<div class="form-group">
+											<label for="baseSize">
+												Base Size (500-2000):
+												<div class="tooltip-container">
+													<span class="tooltip-icon"><i class="fas fa-info-circle"></i></span>
+													<span class="tooltip-text">
+														Controls processing resolution. Higher values (1500) give better quality but slower processing. Lower values (800) process faster but may reduce edge quality.
+													</span>
+												</div>
+											</label>
+											<input type="range" id="baseSize" min="500" max="2000" value="1000" />
+											<span id="baseSizeValue">1000</span>
 										</div>
 									</div>
 								</div>
-								
-								<div style="margin-top: 2rem;">
-									<p style="font-size: 0.9em; color: #888;">Or use the sidebar buttons to quickly switch between login and register modes</p>
+
+								<div class="demo-section">
+									<h3><i class="fas fa-image"></i> Remove Background</h3>
+									<div class="form-group">
+										<label for="imageFile">Select Image:</label>
+										<div class="file-input-container">
+											<input type="file" id="imageFile" accept="image/*" />
+										</div>
+									</div>
+									<div class="form-group">
+										<label>
+											<input type="checkbox" id="returnJson" />
+											Return JSON Response (with base64 image)
+										</label>
+									</div>
+									<button onclick="removeBackground()" class="button primary">Remove Background</button>
+									<div id="imageResult"></div>
 								</div>
 							</div>
 						</div>
@@ -425,7 +372,7 @@
 		<script src="assets/js/breakpoints.min.js"></script>
 		<script src="assets/js/util.js"></script>
 		<script src="assets/js/main.js"></script>
-		<script src="assets/js/auth.js?v=1721308000"></script>
+		<script src="assets/js/demo.js"></script>
 
 	</body>
 </html>

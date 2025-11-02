@@ -1,8 +1,7 @@
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException, status, Depends
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException, status
 from fastapi.responses import StreamingResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timezone
 import io
@@ -32,9 +31,6 @@ app.add_middleware(
 
 # Import background remover
 from background_remover import BackgroundRemover
-from database import get_db, User, APIKey
-from models import UserCreate, UserLogin, UserResponse, TokenResponse, APIKeyCreate, APIKeyResponse
-from auth import create_access_token, get_current_user, hash_password, verify_password
 
 # Initialize background remover
 background_remover = None
@@ -65,11 +61,6 @@ async def root():
     """Serve the landing page"""
     return FileResponse("index.html")
 
-@app.get("/dashboard")
-async def dashboard():
-    """Serve the dashboard page"""
-    return FileResponse("dashboard.html")
-
 @app.get("/favicon.ico")
 async def favicon():
     """Serve favicon"""
@@ -77,176 +68,11 @@ async def favicon():
         return FileResponse("assets/favicon.ico")
     return HTTPException(status_code=404)
 
-# Authentication endpoints
-@app.post("/auth/register", response_model=TokenResponse)
-async def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user"""
-    try:
-        # Check if user already exists
-        existing_user = db.query(User).filter(User.email == user.email).first()
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
-            )
-        
-        # Create new user
-        hashed_password = hash_password(user.password)
-        db_user = User(
-            email=user.email,
-            name=user.name,
-            password_hash=hashed_password
-        )
-        
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        
-        # Create access token
-        access_token = create_access_token(data={"sub": str(db_user.id)})
-        
-        # Update last login
-        db_user.last_login = datetime.now(timezone.utc)
-        db.commit()
-        
-        user_response = UserResponse(
-            id=db_user.id,
-            email=db_user.email,
-            name=db_user.name,
-            created_at=db_user.created_at,
-            last_login=db_user.last_login,
-            is_active=db_user.is_active,
-            api_calls_count=db_user.api_calls_count if db_user.api_calls_count is not None else 0
-        )
-        
-        return TokenResponse(
-            access_token=access_token,
-            token_type="bearer",
-            user=user_response
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Registration failed: {e}")
-        raise HTTPException(status_code=500, detail="Registration failed")
-
-@app.post("/auth/login", response_model=TokenResponse)
-async def login_user(user: UserLogin, db: Session = Depends(get_db)):
-    """Login user and return access token"""
-    try:
-        # Check if user exists
-        db_user = db.query(User).filter(User.email == user.email).first()
-        if not db_user or not verify_password(user.password, db_user.password_hash):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
-            )
-        
-        if not db_user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Account is inactive"
-            )
-        
-        # Create access token
-        access_token = create_access_token(data={"sub": str(db_user.id)})
-        
-        # Update last login
-        db_user.last_login = datetime.now(timezone.utc)
-        db.commit()
-        
-        user_response = UserResponse(
-            id=db_user.id,
-            email=db_user.email,
-            name=db_user.name,
-            created_at=db_user.created_at,
-            last_login=db_user.last_login,
-            is_active=db_user.is_active,
-            api_calls_count=db_user.api_calls_count if db_user.api_calls_count is not None else 0
-        )
-        
-        return TokenResponse(
-            access_token=access_token,
-            token_type="bearer",
-            user=user_response
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Login failed: {e}")
-        raise HTTPException(status_code=500, detail="Login failed")
-
-@app.get("/auth/me", response_model=UserResponse)
-async def get_current_user_info(current_user: User = Depends(get_current_user)):
-    """Get current user information"""
-    return UserResponse(
-        id=current_user.id,
-        email=current_user.email,
-        name=current_user.name,
-        created_at=current_user.created_at,
-        last_login=current_user.last_login,
-        is_active=current_user.is_active,
-        api_calls_count=current_user.api_calls_count if current_user.api_calls_count is not None else 0
-    )
-
-@app.get("/auth/api-keys", response_model=List[APIKeyResponse])
-async def get_user_api_keys(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get API keys for the current user"""
-    api_keys = db.query(APIKey).filter(APIKey.user_id == current_user.id).all()
-    return [APIKeyResponse(
-        id=key.id,
-        key=key.key if key.key is not None else '',
-        name=key.name if key.name is not None else '',
-        created_at=key.created_at,
-        last_used=key.last_used,
-        usage_count=key.usage_count if key.usage_count is not None else 0,
-        is_active=bool(key.is_active) if key.is_active is not None else True,
-        user_id=key.user_id if key.user_id is not None else current_user.id
-    ) for key in api_keys]
-
-@app.post("/auth/api-keys", response_model=APIKeyResponse)
-async def create_user_api_key(
-    key_data: APIKeyCreate, 
-    current_user: User = Depends(get_current_user), 
-    db: Session = Depends(get_db)
-):
-    """Create a new API key for the current user"""
-    try:
-        # Generate API key
-        from auth import generate_api_key
-        api_key = generate_api_key()
-        
-        # Create API key record
-        db_api_key = APIKey(
-            key=api_key,
-            name=key_data.name,
-            user_id=current_user.id,
-            is_active=True
-        )
-        db.add(db_api_key)
-        db.commit()
-        db.refresh(db_api_key)
-        
-        return APIKeyResponse(
-            id=db_api_key.id,
-            key=api_key,
-            name=key_data.name,
-            created_at=db_api_key.created_at,
-            last_used=None,
-            usage_count=0,
-            is_active=True,
-            user_id=current_user.id
-        )
-    except Exception as e:
-        logger.error(f"Failed to create API key: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create API key")
+# All authentication-related endpoints have been removed to simplify the app
 
 @app.post("/remove-background")
 async def remove_background_endpoint(
     file: UploadFile = File(...),
-    api_key: str = Form(...),
     model_hint: str = Form("general"),
     alpha_matting: bool = Form(True),
     alpha_matting_foreground_threshold: int = Form(240),
@@ -257,26 +83,18 @@ async def remove_background_endpoint(
 ):
     import traceback
     try:
-        # Validate API key
         logger.info(f"Processing background removal request for file: {file.filename}")
-        logger.info("Validating API key string: " + api_key[:10] + "...")
-        
-        # Get database session
-        from database import get_db
-        db = next(get_db())
-        
-        # Import and use the correct validation function
-        from auth import validate_api_key_string
-        if not validate_api_key_string(api_key, db):
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid API key"
-            )
-        
-        logger.info("API key string validated successfully")
         
         # Read image file
         contents = await file.read()
+
+        # Enforce 5MB max file size (5 * 1024 * 1024 bytes)
+        max_bytes = 5 * 1024 * 1024
+        if len(contents) > max_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail="Image too large. Maximum allowed size is 5MB."
+            )
         
         # Get background remover instance
         remover = get_background_remover()
